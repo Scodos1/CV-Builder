@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: mono-api
+    env: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    healthCheckPath: /api/health
+    envVars:
+      - key: MONO_ENV
+        value: prod
+      - key: MONO_JWT_SECRET
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: MONO_CORS_ORIGINS
+        value: https://your-frontend-domain.com
+databases:
+  - name: mono-pg
+    plan: starter

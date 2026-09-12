@@ -1,0 +1,28 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      MONO_ENV: prod
+      MONO_JWT_SECRET: ${MONO_JWT_SECRET:?set MONO_JWT_SECRET in .env}
+      DATABASE_URL: postgresql+psycopg2://mono:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@db:5432/mono
+      MONO_CORS_ORIGINS: ${MONO_CORS_ORIGINS:-http://localhost:8000}
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: mono
+      POSTGRES_USER: mono
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mono"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+volumes:
+  pgdata:

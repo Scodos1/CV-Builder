@@ -1,0 +1,12 @@
+fastapi==0.115.*
+uvicorn[standard]==0.30.*
+pyjwt==2.8.*
+python-multipart==0.0.12
+sqlalchemy==2.0.*
+# Postgres prod driver (SQLite needs no driver)
+psycopg2-binary==2.9.*
+# Legacy only: verify old db.json bcrypt hashes (new hashes use stdlib PBKDF2)
+# passlib[bcrypt]==1.7.*
+# Optional: real LLM + server PDF (install only if needed)
+# openai==1.*.*
+# weasyprint==62.*.*

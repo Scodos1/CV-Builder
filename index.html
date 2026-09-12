@@ -1,0 +1,1886 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="referrer" content="no-referrer"/>
+<!-- NOTE: full CSP via hosting headers on deploy (inline scripts + Tailwind CDN need allowlisting); api() already timeouts + truncates errors. -->
+<title>MONO — Resume Studio | Professional CV Builder</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['Inter','system-ui','sans-serif'],
+        serif: ['"Fraunces"','Georgia','serif'],
+        mono: ['"JetBrains Mono"','monospace']
+      },
+      colors: {
+        ink: {950:'#0A0A0A',900:'#111111',800:'#1A1A1A',700:'#262626',100:'#F5F5F5',50:'#FAFAFA'},
+      }
+    }
+  }
+}
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500;600&family=Merriweather:wght@400;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Lora:wght@400;500;600&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+::selection{background:#111;color:#fff}
+.dark ::selection{background:#fff;color:#000}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#d4d4d4;border-radius:99px;border:2px solid transparent;background-clip:content-box}
+.dark ::-webkit-scrollbar-thumb{background:#404040;border-radius:99px;border:2px solid transparent;background-clip:content-box}
+.grid-bg{background-image:linear-gradient(to right, rgba(0,0,0,.06) 1px, transparent 1px),linear-gradient(to bottom, rgba(0,0,0,.06) 1px, transparent 1px);background-size:48px 48px}
+.dark .grid-bg{background-image:linear-gradient(to right, rgba(255,255,255,.06) 1px, transparent 1px),linear-gradient(to bottom, rgba(255,255,255,.06) 1px, transparent 1px)}
+.dot-bg{background-image:radial-gradient(rgba(0,0,0,.14) 1px, transparent 1px);background-size:22px 22px}
+.dark .dot-bg{background-image:radial-gradient(rgba(255,255,255,.14) 1px, transparent 1px)}
+.a4-paper{width:794px;min-height:1123px;background:#fff;color:#111;box-shadow:0 20px 80px -20px rgba(0,0,0,.25),0 0 0 1px rgba(0,0,0,.08);transform-origin:top center}
+.dark .a4-paper{box-shadow:0 20px 80px -20px rgba(0,0,0,.8),0 0 0 1px rgba(255,255,255,.12)}
+.resume-content{font-size:10pt;line-height:1.55}
+.resume-content a{color:inherit;text-decoration:none}
+.fade-in{animation:fadeIn .5s ease both}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.slide-in{animation:slideIn .35s cubic-bezier(.16,1,.3,1) both}
+@keyframes slideIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+.pulse-dot{animation:pulseDot 1.4s infinite}
+@keyframes pulseDot{0%,100%{opacity:1}50%{opacity:.35}}
+.typing-cursor::after{content:'▋';animation:blink 1s infinite;margin-left:2px}
+@keyframes blink{50%{opacity:0}}
+.marquee-track{display:flex;gap:2.5rem;animation:marquee 28s linear infinite;width:max-content}
+@keyframes marquee{to{transform:translateX(-50%)}}
+.score-ring{transition:stroke-dashoffset 1.2s cubic-bezier(.16,1,.3,1)}
+.btn-press:active{transform:scale(.97)}
+input,textarea,select{outline:none}
+.field{transition:all .18s ease}
+.field:focus{border-color:#111!important;box-shadow:0 0 0 3px rgba(0,0,0,.08)}
+.dark .field:focus{border-color:#fff!important;box-shadow:0 0 0 3px rgba(255,255,255,.12)}
+.accordion-body{max-height:0;overflow:hidden;transition:max-height .4s cubic-bezier(.16,1,.3,1)}
+.accordion-open .accordion-body{max-height:5000px}
+.accordion-open .acc-chevron{transform:rotate(180deg)}
+.acc-chevron{transition:transform .3s}
+.template-card{transition:all .22s ease}
+.template-card.active{border-color:#111!important;box-shadow:0 0 0 2px #111}
+.dark .template-card.active{border-color:#fff!important;box-shadow:0 0 0 2px #fff}
+.swatch.active{box-shadow:0 0 0 2px #fff,0 0 0 4px #111}
+.dark .swatch.active{box-shadow:0 0 0 2px #000,0 0 0 4px #fff}
+input[type=range]{accent-color:#111}
+.dark input[type=range]{accent-color:#fff}
+.toast-in{animation:toastIn .4s cubic-bezier(.16,1,.3,1) both}
+@keyframes toastIn{from{opacity:0;transform:translateY(16px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+.shimmer{background:linear-gradient(90deg,transparent,rgba(0,0,0,.06),transparent);background-size:200% 100%;animation:shimmer 1.6s infinite}
+.dark .shimmer{background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent);background-size:200% 100%}
+@keyframes shimmer{to{background-position:-200% 0}}
+.builder-grid{display:grid;grid-template-columns:360px 1fr 300px;height:calc(100vh - 64px)}
+@media(max-width:1280px){.builder-grid{grid-template-columns:340px 1fr 280px}}
+@media(max-width:1024px){.builder-grid{grid-template-columns:1fr;height:auto}.builder-col{display:none}.builder-col.mobile-active{display:block}}
+.kbd{font-family:'JetBrains Mono',monospace;font-size:11px;border:1px solid currentColor;border-radius:6px;padding:1px 6px;opacity:.6}
+.timeline-line::before{content:'';position:absolute;left:11px;top:28px;bottom:-8px;width:2px;background:currentColor;opacity:.12}
+/* Resume templates specifics */
+.r-modern-h{letter-spacing:.18em;text-transform:uppercase;font-weight:800;font-size:.72em}
+.r-minimal-h{text-align:center;letter-spacing:.28em;text-transform:uppercase;font-size:.72em;font-weight:600}
+.r-pro-bar{break-inside:avoid}
+@media print{
+  body *{visibility:hidden!important}
+  #print-root,#print-root *{visibility:visible!important}
+  #print-root{display:block!important;position:absolute;left:0;top:0;width:100%;margin:0;padding:0}
+  #print-root .a4-paper{box-shadow:none!important;border:none!important;width:100%!important;min-height:auto!important;margin:0!important}
+  @page{size:A4;margin:0}
+  .no-print{display:none!important}
+}
+#print-root{display:none}
+.tag-remove:hover{background:rgba(0,0,0,.15)}
+.line-clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.drawer{transition:transform .4s cubic-bezier(.16,1,.3,1)}
+.modal-bg{backdrop-filter:blur(8px)}
+.check-anim{stroke-dasharray:60;stroke-dashoffset:60;animation:draw .6s .2s ease forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+</style>
+</head>
+<body class="bg-white text-black dark:bg-[#0A0A0A] dark:text-white transition-colors duration-300">
+
+<!-- TOASTS -->
+<div id="toasts" class="fixed bottom-6 right-6 z-[200] flex flex-col gap-3 items-end"></div>
+
+<!-- TOP NAV -->
+<nav id="mainNav" class="fixed top-0 left-0 right-0 z-[100] h-16 border-b border-neutral-200 dark:border-neutral-800 bg-white/85 dark:bg-[#0A0A0A]/85 backdrop-blur-xl">
+  <div class="max-w-[1600px] mx-auto h-full px-4 md:px-6 flex items-center justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <button onclick="goHome()" class="flex items-center gap-3 group">
+        <div class="w-9 h-9 bg-black dark:bg-white text-white dark:text-black flex items-center justify-center font-black text-lg rounded-[10px] group-hover:rotate-6 transition-transform">M</div>
+        <div class="text-left leading-none">
+          <div class="font-extrabold tracking-tight text-[17px]">MONO<span class="opacity-40 font-light">·</span><span class="font-light">Studio</span></div>
+          <div class="text-[10px] font-mono uppercase tracking-[.2em] opacity-50">Resume Builder</div>
+        </div>
+      </button>
+      <div class="hidden md:flex items-center gap-1 ml-6 text-sm">
+        <button onclick="showView('landing')" class="nav-link px-3 py-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-900 font-medium opacity-70 hover:opacity-100">Product</button>
+        <button onclick="openTemplatesGallery()" class="nav-link px-3 py-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-900 font-medium opacity-70 hover:opacity-100">Templates</button>
+        <button onclick="scrollToId('features')" class="nav-link px-3 py-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-900 font-medium opacity-70 hover:opacity-100 hidden lg:block">Features</button>
+        <button onclick="scrollToId('pricing')" class="nav-link px-3 py-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-900 font-medium opacity-70 hover:opacity-100 hidden lg:block">Pricing</button>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <div data-api-badge class="hidden md:flex items-center gap-2 mr-2 text-xs font-mono opacity-60 border border-neutral-200 dark:border-neutral-800 rounded-full px-3 py-1.5">
+        <span class="w-2 h-2 rounded-full bg-neutral-400"></span> API · Offline (local mode)
+      </div>
+      <button onclick="toggleTheme()" class="w-10 h-10 rounded-full border border-neutral-200 dark:border-neutral-800 flex items-center justify-center hover:bg-neutral-100 dark:hover:bg-neutral-900 transition" title="Toggle theme">
+        <span id="themeIconSun" class="hidden dark:block text-lg">☾</span>
+        <span id="themeIconMoon" class="dark:hidden text-lg">☀</span>
+      </button>
+      <div id="navAuth" class="flex items-center gap-2">
+        <button onclick="showView('auth');setAuthMode('login')" class="px-4 py-2 text-sm font-semibold hover:bg-neutral-100 dark:hover:bg-neutral-900 rounded-full transition">Log in</button>
+        <button onclick="showView('auth');setAuthMode('register')" class="px-5 py-2.5 text-sm font-semibold bg-black text-white dark:bg-white dark:text-black rounded-full hover:opacity-80 transition btn-press">Get started →</button>
+      </div>
+      <div id="navUser" class="hidden items-center gap-2">
+        <button onclick="showView('dashboard')" class="hidden sm:block px-4 py-2 text-sm font-semibold hover:bg-neutral-100 dark:hover:bg-neutral-900 rounded-full">Dashboard</button>
+        <div class="relative">
+          <button onclick="toggleUserMenu()" id="avatarBtn" class="w-10 h-10 rounded-full bg-black text-white dark:bg-white dark:text-black font-bold flex items-center justify-center text-sm">U</button>
+          <div id="userMenu" class="hidden absolute right-0 top-12 w-64 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl shadow-2xl p-2 z-50">
+            <div class="px-3 py-3 border-b border-neutral-100 dark:border-neutral-800">
+              <div id="userMenuName" class="font-bold text-sm">User</div>
+              <div id="userMenuEmail" class="text-xs opacity-60 truncate">email</div>
+            </div>
+            <button onclick="showView('dashboard')" class="w-full text-left px-3 py-2.5 text-sm rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800">📊 Dashboard</button>
+            <button onclick="openProfile()" class="w-full text-left px-3 py-2.5 text-sm rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800">👤 Profile & Settings</button>
+            <button onclick="toggleTheme()" class="w-full text-left px-3 py-2.5 text-sm rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800">◐ Toggle theme</button>
+            <button onclick="logout()" class="w-full text-left px-3 py-2.5 text-sm rounded-xl hover:bg-red-50 dark:hover:bg-red-950 text-red-600">↪ Log out</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ============ LANDING ============ -->
+<main id="view-landing" class="pt-16">
+  <!-- Hero -->
+  <section class="relative overflow-hidden">
+    <div class="absolute inset-0 grid-bg opacity-60 pointer-events-none"></div>
+    <div class="max-w-[1200px] mx-auto px-6 pt-16 md:pt-24 pb-12 text-center relative">
+      <div class="inline-flex items-center gap-2 border border-neutral-200 dark:border-neutral-800 rounded-full px-4 py-1.5 text-xs font-mono mb-6 bg-white/60 dark:bg-black/60 backdrop-blur">
+        <span class="w-2 h-2 rounded-full bg-black dark:bg-white"></span> v2.0 — AI Career Assistant + ATS Analyzer live
+      </div>
+      <h1 class="font-extrabold tracking-[-0.04em] leading-[0.95] text-5xl md:text-7xl lg:text-8xl">Build a résumé<br/><span class="font-serif italic font-medium">that gets hired.</span></h1>
+      <p class="mt-6 text-base md:text-lg opacity-60 max-w-2xl mx-auto leading-relaxed">The black-and-white professional CV studio. Live A4 preview, 4 ATS-friendly templates, AI writing coach, job-match analysis and one-click PDF export.</p>
+      <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+        <button onclick="handleGetStarted()" class="w-full sm:w-auto px-8 py-4 bg-black text-white dark:bg-white dark:text-black rounded-full font-bold text-[15px] hover:opacity-80 transition btn-press">Start building — free →</button>
+        <button onclick="openTemplatesGallery()" class="w-full sm:w-auto px-8 py-4 border border-neutral-300 dark:border-neutral-700 rounded-full font-bold text-[15px] hover:bg-neutral-100 dark:hover:bg-neutral-900 transition btn-press">View templates</button>
+      </div>
+      <div class="mt-6 flex items-center justify-center gap-6 text-xs font-mono opacity-50">
+        <span>✓ No credit card</span><span>✓ ATS-friendly</span><span>✓ A4 PDF export</span>
+      </div>
+      <!-- Hero preview -->
+      <div class="mt-14 relative max-w-5xl mx-auto">
+        <div class="absolute -inset-4 bg-gradient-to-b from-neutral-200/60 to-transparent dark:from-neutral-800/40 rounded-[32px] blur-2xl"></div>
+        <div class="relative border border-neutral-200 dark:border-neutral-800 rounded-2xl overflow-hidden bg-white dark:bg-neutral-950 shadow-2xl">
+          <div class="flex items-center gap-2 px-4 py-3 border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900">
+            <div class="flex gap-1.5"><div class="w-3 h-3 rounded-full bg-neutral-300 dark:bg-neutral-700"></div><div class="w-3 h-3 rounded-full bg-neutral-300 dark:bg-neutral-700"></div><div class="w-3 h-3 rounded-full bg-neutral-300 dark:bg-neutral-700"></div></div>
+            <div class="flex-1 text-center text-xs font-mono opacity-50">mono.studio/builder — Frontend Developer CV</div>
+            <div class="text-[11px] font-mono px-2 py-1 rounded-md bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-300">● Saved ✓</div>
+          </div>
+          <div class="grid md:grid-cols-[1fr_1.2fr] text-left">
+            <div class="p-6 md:p-8 border-b md:border-b-0 md:border-r border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950">
+              <div class="text-[11px] font-mono uppercase tracking-widest opacity-50 mb-3">✦ AI Career Assistant</div>
+              <div class="text-sm leading-relaxed border border-neutral-200 dark:border-neutral-800 rounded-xl p-4 bg-neutral-50 dark:bg-neutral-900">
+                <div class="opacity-50 line-through text-[13px]">"Worked on a website."</div>
+                <div class="mt-2 font-medium text-[13px]">→ "Developed responsive web interfaces optimized for desktop and mobile users."</div>
+              </div>
+              <div class="mt-4 grid grid-cols-3 gap-2 text-center">
+                <div class="border border-neutral-200 dark:border-neutral-800 rounded-xl p-3"><div class="font-extrabold text-xl">82</div><div class="text-[10px] font-mono opacity-60">ATS SCORE</div></div>
+                <div class="border border-neutral-200 dark:border-neutral-800 rounded-xl p-3"><div class="font-extrabold text-xl">4</div><div class="text-[10px] font-mono opacity-60">TEMPLATES</div></div>
+                <div class="border border-neutral-200 dark:border-neutral-800 rounded-xl p-3"><div class="font-extrabold text-xl">A4</div><div class="text-[10px] font-mono opacity-60">PDF EXPORT</div></div>
+              </div>
+              <div class="mt-4 flex gap-2">
+                <div class="flex-1 h-9 rounded-full bg-black dark:bg-white"></div>
+                <div class="flex-1 h-9 rounded-full border border-neutral-300 dark:border-neutral-700"></div>
+              </div>
+            </div>
+            <div class="p-6 md:p-8 bg-neutral-50 dark:bg-black dot-bg">
+              <div class="bg-white text-black rounded-lg shadow-xl p-6 max-w-sm mx-auto text-left" style="font-size:11px;line-height:1.6">
+                <div class="font-extrabold text-lg tracking-tight">Amara Okafor</div>
+                <div class="text-[11px] font-semibold tracking-wide uppercase opacity-60">Frontend Developer</div>
+                <div class="mt-1 opacity-60">amara.dev · Lagos, Nigeria · +234 800 000 0000</div>
+                <div class="mt-3 h-[2px] bg-black"></div>
+                <div class="mt-3 font-bold text-[10px] tracking-[.2em]">EXPERIENCE</div>
+                <div class="mt-2"><span class="font-bold">Senior Frontend Engineer — Paystack</span> <span class="opacity-50">· 2022—Present</span><br/><span class="opacity-70">• Shipped checkout UI serving 2M+ monthly users…</span></div>
+                <div class="mt-2"><span class="font-bold">UI Developer — Cowrywise</span> <span class="opacity-50">· 2020—2022</span><br/><span class="opacity-70">• Reduced bundle size by 34% via code-splitting…</span></div>
+                <div class="mt-3 font-bold text-[10px] tracking-[.2em]">SKILLS</div>
+                <div class="mt-1 flex flex-wrap gap-1"><span class="border border-black px-2 py-0.5 rounded-full">React</span><span class="border border-black px-2 py-0.5 rounded-full">TypeScript</span><span class="border border-black px-2 py-0.5 rounded-full">Tailwind</span><span class="bg-black text-white px-2 py-0.5 rounded-full">+9</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mt-8 overflow-hidden opacity-40 font-mono text-xs tracking-[.25em]">
+        <div class="marquee-track"><span>REACT · DJANGO · POSTGRESQL · JWT · ATS ANALYSIS · AI WRITING · A4 PDF · AUTOSAVE ·&nbsp;</span><span>REACT · DJANGO · POSTGRESQL · JWT · ATS ANALYSIS · AI WRITING · A4 PDF · AUTOSAVE ·&nbsp;</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Logos -->
+  <section class="border-y border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950">
+    <div class="max-w-[1200px] mx-auto px-6 py-8 flex flex-wrap items-center justify-center gap-8 md:gap-14 opacity-40 font-extrabold tracking-tight text-lg">
+      <span>Google</span><span class="font-serif italic">Stripe</span><span>Spotify</span><span class="font-mono font-normal">▲ Vercel</span><span>Notion</span><span class="font-serif">Paystack</span>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section id="features" class="max-w-[1200px] mx-auto px-6 py-20">
+    <div class="text-xs font-mono uppercase tracking-[.25em] opacity-50">01 — Platform</div>
+    <h2 class="mt-3 text-4xl md:text-5xl font-extrabold tracking-tight">Everything a hiring<br/>pipeline demands.</h2>
+    <div class="mt-12 grid md:grid-cols-3 gap-4">
+      <div class="border border-neutral-200 dark:border-neutral-800 rounded-2xl p-7 hover:shadow-xl transition bg-white dark:bg-neutral-950">
+        <div class="w-11 h-11 rounded-xl bg-black text-white dark:bg-white dark:text-black flex items-center justify-center text-xl">◈</div>
+        <h3 class="mt-5 font-bold text-lg">Live A4 Preview</h3>
+        <p class="mt-2 text-sm opacity-60 leading-relaxed">Three-pane builder. Every keystroke renders instantly on a true A4 canvas with correct margins and typography.</p>
+        <div class="mt-4 text-xs font-mono opacity-50">Sections → Preview → Design</div>
+      </div>
+      <div class="border border-neutral-200 dark:border-neutral-800 rounded-2xl p-7 hover:shadow-xl transition bg-white dark:bg-neutral-950">
+        <div class="w-11 h-11 rounded-xl bg-black text-white dark:bg-white dark:text-black flex items-center justify-center text-xl">✦</div>
+        <h3 class="mt-5 font-bold text-lg">AI Career Assistant</h3>
+        <p class="mt-2 text-sm opacity-60 leading-relaxed">Improves summaries and bullets without fabricating experience. Concise, professional, measurable language.</p>
+        <div class="mt-4 text-xs font-mono opacity-50">POST /api/ai/improve-bullet/</div>
+      </div>
+      <div class="border border-neutral-200 dark:border-neutral-800 rounded-2xl p-7 hover:shadow-xl transition bg-white dark:bg-neutral-950">
+        <div class="w-11 h-11 rounded-xl bg-black text-white dark:bg-white dark:text-black flex items-center justify-center text-xl">◎</div>
+        <h3 class="mt-5 font-bold text-lg">ATS Analyzer</h3>
+        <p class="mt-2 text-sm opacity-60 leading-relaxed">Estimated 0–100 compatibility score across structure, keywords, dates, formatting and measurable impact.</p>
+        <div class="mt-4 text-xs font-mono opacity-50">Estimate only — no guarantee</div>
+      </div>
+      <div class="border border-neutral-200 dark:border-neutral-800 rounded-2xl p-7 hover:shadow-xl transition bg-white dark:bg-neutral-950">
+        <div class="w-11 h-11 rounded-xl bg-black text-white dark:bg-white dark:text-black flex items-center justify-center text-xl">⬔</div>
+        <h3 class="mt-5 font-bold text-lg">Job Description Match</h3>
+        <p class="mt-2 text-sm opacity-60 leading-relaxed">Paste any JD. Extract required skills, find missing keywords, then fork a tailored copy — original untouched.</p>
+        <div class="mt-4 text-xs font-mono opacity-50">POST /api/ai/analyze-job/</div>
+      </div>
+      <div class="border border-neutral-200 dark:border-neutral-800 rounded-2xl p-7 hover:shadow-xl transition bg-white dark:bg-neutral-950">
+        <div class="w-11 h-11 rounded-xl bg-black text-white dark:bg-white dark:text-black flex items-center justify-center text-xl">⤓</div>
+        <h3 class="mt-5 font-bold text-lg">A4 PDF Export</h3>
+        <p class="mt-2 text-sm opacity-60 leading-relaxed">Selectable text, clickable links, correct page breaks. Print-perfect output that survives any ATS parser.</p>
+        <div class="mt-4 text-xs font-mono opacity-50">POST /api/resumes/{id}/export/</div>
+      </div>
+      <div class="border border-neutral-200 dark:border-neutral-800 rounded-2xl p-7 hover:shadow-xl transition bg-white dark:bg-neutral-950">
+        <div class="w-11 h-11 rounded-xl bg-black text-white dark:bg-white dark:text-black flex items-center justify-center text-xl">◐</div>
+        <h3 class="mt-5 font-bold text-lg">Light + Dark SaaS</h3>
+        <p class="mt-2 text-sm opacity-60 leading-relaxed">Strict black-and-white identity across themes. Preference persists. Resumes stay print-professional always.</p>
+        <div class="mt-4 text-xs font-mono opacity-50">theme: persisted · localStorage</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Flow -->
+  <section class="border-y border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950">
+    <div class="max-w-[1200px] mx-auto px-6 py-20 grid lg:grid-cols-2 gap-12 items-center">
+      <div>
+        <div class="text-xs font-mono uppercase tracking-[.25em] opacity-50">02 — Workflow</div>
+        <h2 class="mt-3 text-4xl font-extrabold tracking-tight">Sign up → Export.<br/>Six minutes flat.</h2>
+        <div class="mt-8 space-y-0">
+          <div class="flex gap-4 relative timeline-line pb-7"><div class="w-6 h-6 rounded-full bg-black text-white dark:bg-white dark:text-black text-xs font-bold flex items-center justify-center shrink-0 relative z-10">1</div><div><div class="font-bold text-sm">Create account & dashboard</div><div class="text-sm opacity-60">JWT auth, multiple resume versions, completion tracking.</div></div></div>
+          <div class="flex gap-4 relative timeline-line pb-7"><div class="w-6 h-6 rounded-full bg-black text-white dark:bg-white dark:text-black text-xs font-bold flex items-center justify-center shrink-0 relative z-10">2</div><div><div class="font-bold text-sm">Pick a template</div><div class="text-sm opacity-60">Modern, Minimal, Professional, ATS-Friendly. Switch anytime — data preserved.</div></div></div>
+          <div class="flex gap-4 relative timeline-line pb-7"><div class="w-6 h-6 rounded-full bg-black text-white dark:bg-white dark:text-black text-xs font-bold flex items-center justify-center shrink-0 relative z-10">3</div><div><div class="font-bold text-sm">Edit with live preview + autosave</div><div class="text-sm opacity-60">Debounced autosave. Saving… → Saved ✓. Reorder & hide sections.</div></div></div>
+          <div class="flex gap-4 relative"><div class="w-6 h-6 rounded-full bg-black text-white dark:bg-white dark:text-black text-xs font-bold flex items-center justify-center shrink-0 relative z-10">4</div><div><div class="font-bold text-sm">AI polish → ATS check → Export PDF</div><div class="text-sm opacity-60">Improve writing, score compatibility, match JDs, download A4 PDF.</div></div></div>
+        </div>
+      </div>
+      <div class="border border-neutral-200 dark:border-neutral-800 rounded-2xl overflow-hidden bg-[#0A0A0A] text-white">
+        <div class="px-5 py-3 border-b border-white/10 flex items-center justify-between text-xs font-mono"><span class="opacity-60">● REST API — Django DRF</span><span class="px-2 py-1 rounded bg-white/10">JWT secured</span></div>
+        <div class="p-5 font-mono text-[12px] leading-7 overflow-x-auto">
+          <div><span class="text-green-400">POST</span> <span class="opacity-80">/api/auth/register/</span></div>
+          <div><span class="text-green-400">POST</span> <span class="opacity-80">/api/auth/login/</span></div>
+          <div><span class="text-blue-400">GET</span> <span class="opacity-80">/api/resumes/</span> <span class="opacity-40">→ ownership verified</span></div>
+          <div><span class="text-green-400">POST</span> <span class="opacity-80">/api/resumes/</span></div>
+          <div><span class="text-yellow-400">PATCH</span> <span class="opacity-80">/api/resumes/{id}/</span> <span class="opacity-40">→ autosave</span></div>
+          <div><span class="text-green-400">POST</span> <span class="opacity-80">/api/resumes/{id}/duplicate/</span></div>
+          <div><span class="text-purple-400">POST</span> <span class="opacity-80">/api/ai/improve-summary/</span></div>
+          <div><span class="text-purple-400">POST</span> <span class="opacity-80">/api/ai/analyze-resume/</span></div>
+          <div><span class="text-purple-400">POST</span> <span class="opacity-80">/api/ai/analyze-job/</span> <span class="opacity-40">→ rate-limited</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Templates preview -->
+  <section class="max-w-[1200px] mx-auto px-6 py-20">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div><div class="text-xs font-mono uppercase tracking-[.25em] opacity-50">03 — Templates</div>
+      <h2 class="mt-3 text-4xl font-extrabold tracking-tight">Four templates. One dataset.</h2></div>
+      <button onclick="openTemplatesGallery()" class="px-6 py-3 border border-neutral-300 dark:border-neutral-700 rounded-full font-bold text-sm hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition">Open gallery →</button>
+    </div>
+    <div class="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-4" id="landingTemplates"></div>
+  </section>
+
+  <!-- Pricing -->
+  <section id="pricing" class="border-t border-neutral-200 dark:border-neutral-800">
+    <div class="max-w-[1000px] mx-auto px-6 py-20 text-center">
+      <div class="text-xs font-mono uppercase tracking-[.25em] opacity-50">04 — Pricing</div>
+      <h2 class="mt-3 text-4xl font-extrabold tracking-tight">Free to start. Pro to stand out.</h2>
+      <div class="mt-10 grid md:grid-cols-3 gap-4 text-left">
+        <div class="border border-neutral-200 dark:border-neutral-800 rounded-2xl p-7">
+          <div class="text-xs font-mono uppercase tracking-widest opacity-60">Starter</div><div class="mt-2 text-4xl font-extrabold">$0</div>
+          <ul class="mt-5 space-y-2.5 text-sm opacity-70"><li>✓ 1 resume</li><li>✓ 2 templates</li><li>✓ A4 PDF export</li><li>✓ Autosave</li></ul>
+          <button onclick="handleGetStarted()" class="mt-6 w-full py-3 border border-neutral-300 dark:border-neutral-700 rounded-full font-bold text-sm hover:bg-neutral-100 dark:hover:bg-neutral-900">Start free</button>
+        </div>
+        <div class="bg-black text-white dark:bg-white dark:text-black rounded-2xl p-7 relative">
+          <div class="absolute -top-3 left-1/2 -translate-x-1/2 text-[11px] font-mono bg-neutral-200 dark:bg-neutral-800 text-black dark:text-white px-3 py-1 rounded-full">MOST POPULAR</div>
+          <div class="text-xs font-mono uppercase tracking-widest opacity-60">Pro</div><div class="mt-2 text-4xl font-extrabold">$9<span class="text-base font-normal opacity-60">/mo</span></div>
+          <ul class="mt-5 space-y-2.5 text-sm opacity-80"><li>✓ Unlimited resumes</li><li>✓ All 4 templates</li><li>✓ AI Career Assistant</li><li>✓ ATS + JD Analyzer</li><li>✓ Tailored copies</li></ul>
+          <button onclick="handleGetStarted()" class="mt-6 w-full py-3 bg-white text-black dark:bg-black dark:text-white rounded-full font-bold text-sm hover:opacity-80">Go Pro →</button>
+        </div>
+        <div class="border border-neutral-200 dark:border-neutral-800 rounded-2xl p-7">
+          <div class="text-xs font-mono uppercase tracking-widest opacity-60">Team</div><div class="mt-2 text-4xl font-extrabold">$29</div>
+          <ul class="mt-5 space-y-2.5 text-sm opacity-70"><li>✓ Everything in Pro</li><li>✓ 5 seats</li><li>✓ Cover letters (soon)</li><li>✓ Priority support</li></ul>
+          <button onclick="toast('Team plan — coming soon','info')" class="mt-6 w-full py-3 border border-neutral-300 dark:border-neutral-700 rounded-full font-bold text-sm hover:bg-neutral-100 dark:hover:bg-neutral-900">Contact sales</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA + Footer -->
+  <section class="max-w-[1200px] mx-auto px-6 pb-20">
+    <div class="bg-black text-white dark:bg-white dark:text-black rounded-[28px] p-10 md:p-16 text-center relative overflow-hidden">
+      <div class="absolute inset-0 dot-bg opacity-20"></div>
+      <h2 class="relative text-4xl md:text-6xl font-extrabold tracking-tight">Your next role starts<br/><span class="font-serif italic font-medium">on one page.</span></h2>
+      <button onclick="handleGetStarted()" class="relative mt-8 px-10 py-4 bg-white text-black dark:bg-black dark:text-white rounded-full font-bold hover:opacity-80 transition btn-press">Create my resume →</button>
+    </div>
+  </section>
+  <footer class="border-t border-neutral-200 dark:border-neutral-800">
+    <div class="max-w-[1200px] mx-auto px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-4 text-sm opacity-60">
+      <div class="flex items-center gap-2"><div class="w-7 h-7 bg-black dark:bg-white text-white dark:text-black rounded-lg flex items-center justify-center font-black text-sm">M</div><span class="font-bold opacity-100 text-black dark:text-white">MONO Studio</span> © 2026</div>
+      <div class="flex gap-6 font-mono text-xs"><span>Privacy</span><span>Terms</span><span>Security</span><span>API Docs</span></div>
+    </div>
+  </footer>
+</main>
+
+<!-- ============ AUTH ============ -->
+<main id="view-auth" class="hidden pt-16 min-h-screen">
+  <div class="max-w-[1100px] mx-auto px-6 py-12 grid lg:grid-cols-2 gap-8 items-stretch">
+    <div class="hidden lg:flex flex-col justify-between bg-black text-white dark:bg-white dark:text-black rounded-3xl p-10 relative overflow-hidden">
+      <div class="absolute inset-0 dot-bg opacity-20"></div>
+      <div class="relative font-mono text-xs tracking-[.25em] opacity-60">MONO · SECURE AUTH · JWT</div>
+      <div class="relative">
+        <h2 class="text-5xl font-extrabold tracking-tight leading-[1.02]">Join 40,000+<br/><span class="font-serif italic font-medium">job seekers.</span></h2>
+        <div class="mt-8 space-y-4 text-sm">
+          <div class="flex gap-3 items-start"><div class="w-8 h-8 rounded-full bg-white/15 dark:bg-black/10 flex items-center justify-center shrink-0">✓</div><div><b>Hashed passwords, JWT sessions</b><br/><span class="opacity-60">Protected endpoints · CORS · HTTPS in production</span></div></div>
+          <div class="flex gap-3 items-start"><div class="w-8 h-8 rounded-full bg-white/15 dark:bg-black/10 flex items-center justify-center shrink-0">✓</div><div><b>Your data stays yours</b><br/><span class="opacity-60">Ownership-verified resumes · Export anytime</span></div></div>
+        </div>
+      </div>
+      <div class="relative font-mono text-xs opacity-50">POST /api/auth/register/ → 201 Created</div>
+    </div>
+    <div class="border border-neutral-200 dark:border-neutral-800 rounded-3xl p-8 md:p-10 bg-white dark:bg-neutral-950">
+      <div class="flex bg-neutral-100 dark:bg-neutral-900 rounded-full p-1 text-sm font-bold">
+        <button id="tabLogin" onclick="setAuthMode('login')" class="flex-1 py-2.5 rounded-full transition">Log in</button>
+        <button id="tabRegister" onclick="setAuthMode('register')" class="flex-1 py-2.5 rounded-full transition">Sign up</button>
+      </div>
+      <h2 id="authTitle" class="mt-7 text-3xl font-extrabold tracking-tight">Welcome back</h2>
+      <p id="authSub" class="mt-1 text-sm opacity-60">Log in to your resume dashboard.</p>
+      <div class="mt-7 space-y-4">
+        <div id="nameField" class="hidden">
+          <label class="text-xs font-bold uppercase tracking-widest opacity-60">Full name</label>
+          <input id="authName" type="text" placeholder="Ada Lovelace" class="field mt-2 w-full border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-3.5 text-sm bg-white dark:bg-black"/>
+        </div>
+        <div>
+          <label class="text-xs font-bold uppercase tracking-widest opacity-60">Email</label>
+          <input id="authEmail" type="email" placeholder="you@example.com" class="field mt-2 w-full border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-3.5 text-sm bg-white dark:bg-black"/>
+        </div>
+        <div>
+          <label class="text-xs font-bold uppercase tracking-widest opacity-60">Password</label>
+          <div class="relative mt-2">
+            <input id="authPass" type="password" placeholder="••••••••" class="field w-full border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-3.5 text-sm bg-white dark:bg-black pr-12"/>
+            <button onclick="togglePass()" class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-mono opacity-60 hover:opacity-100">SHOW</button>
+          </div>
+        </div>
+        <div id="passHint" class="hidden text-xs opacity-60 bg-neutral-100 dark:bg-neutral-900 rounded-xl p-3">Use 8+ characters. Passwords are hashed (SHA-256 + salt) before storage.</div>
+      </div>
+      <button id="authSubmit" onclick="submitAuth()" class="mt-6 w-full py-4 bg-black text-white dark:bg-white dark:text-black rounded-full font-bold text-sm hover:opacity-80 transition btn-press">Log in →</button>
+      <div class="mt-4 flex items-center justify-between text-xs">
+        <button onclick="resetPassword()" class="opacity-60 hover:opacity-100 underline">Forgot password?</button>
+        <button onclick="fillDemo()" class="opacity-60 hover:opacity-100 underline font-mono">Use demo account →</button>
+      </div>
+      <div class="mt-6 pt-6 border-t border-neutral-200 dark:border-neutral-800">
+        <button onclick="toast('Google OAuth — coming in Phase 7','info')" class="w-full py-3 border border-neutral-300 dark:border-neutral-700 rounded-full text-sm font-bold hover:bg-neutral-100 dark:hover:bg-neutral-900 transition flex items-center justify-center gap-2"><span class="font-extrabold">G</span> Continue with Google</button>
+        <p class="mt-4 text-[11px] opacity-50 text-center leading-relaxed">Protected by rate limiting · Input validation · Secure sessions.<br/>Future: email verification, 2FA, Google OAuth.</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ============ DASHBOARD ============ -->
+<main id="view-dashboard" class="hidden pt-16 min-h-screen bg-neutral-50 dark:bg-black">
+  <div class="max-w-[1300px] mx-auto px-4 md:px-6 py-8">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div>
+        <div class="text-xs font-mono uppercase tracking-[.25em] opacity-50">Dashboard</div>
+        <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight mt-1">Good <span id="dayPart">morning</span>, <span id="dashName">there</span> 👋</h1>
+        <p class="text-sm opacity-60 mt-1">Manage versions, track completion, export when ready.</p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <div class="relative">
+          <input id="dashSearch" oninput="renderDashboard()" placeholder="Search resumes…" class="field border border-neutral-300 dark:border-neutral-700 rounded-full pl-10 pr-4 py-2.5 text-sm w-56 bg-white dark:bg-neutral-950"/>
+          <span class="absolute left-3.5 top-1/2 -translate-y-1/2 opacity-50 text-sm">⌕</span>
+        </div>
+        <select id="dashSort" onchange="renderDashboard()" class="field border border-neutral-300 dark:border-neutral-700 rounded-full px-4 py-2.5 text-sm bg-white dark:bg-neutral-950 font-medium">
+          <option value="updated">Recently updated</option><option value="name">Name A–Z</option><option value="completion">Completion</option><option value="created">Recently created</option>
+        </select>
+        <button onclick="openNewResume()" class="px-6 py-2.5 bg-black text-white dark:bg-white dark:text-black rounded-full font-bold text-sm hover:opacity-80 btn-press">+ New resume</button>
+      </div>
+    </div>
+    <div class="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-3" id="dashStats"></div>
+    <div class="mt-6 flex items-center justify-between">
+      <h2 class="font-extrabold text-lg tracking-tight">My resumes <span id="resumeCount" class="ml-1 text-sm font-mono opacity-50"></span></h2>
+      <div class="text-xs font-mono opacity-50 hidden sm:block">GET /api/resumes/ · ownership verified</div>
+    </div>
+    <div id="resumeGrid" class="mt-4 grid sm:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+    <div id="dashEmpty" class="hidden mt-4 border-2 border-dashed border-neutral-300 dark:border-neutral-700 rounded-3xl p-14 text-center">
+      <div class="text-5xl">📄</div>
+      <h3 class="mt-4 font-extrabold text-xl">No resumes yet</h3>
+      <p class="text-sm opacity-60 mt-1">Create your first version — e.g. "Frontend Developer CV".</p>
+      <button onclick="openNewResume()" class="mt-6 px-8 py-3.5 bg-black text-white dark:bg-white dark:text-black rounded-full font-bold text-sm">+ Create resume</button>
+    </div>
+    <!-- Tips -->
+    <div class="mt-8 grid md:grid-cols-3 gap-4">
+      <div class="border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 bg-white dark:bg-neutral-950"><div class="text-xs font-mono opacity-50">✦ AI TIP</div><p class="mt-2 text-sm leading-relaxed">Start bullets with action verbs and add numbers. <i>"Improved load time by 40%"</i> beats <i>"Worked on performance."</i></p></div>
+      <div class="border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 bg-white dark:bg-neutral-950"><div class="text-xs font-mono opacity-50">◎ ATS TIP</div><p class="mt-2 text-sm leading-relaxed">Keep standard headings — Experience, Education, Skills. Avoid tables, text boxes and graphics inside the CV.</p></div>
+      <div class="border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 bg-white dark:bg-neutral-950"><div class="text-xs font-mono opacity-50">⬔ TAILORING TIP</div><p class="mt-2 text-sm leading-relaxed">Mirror the job description's keywords naturally. Use Job Match to fork a tailored copy per application.</p></div>
+    </div>
+  </div>
+</main>
+
+<!-- ============ BUILDER ============ -->
+<main id="view-builder" class="hidden pt-16">
+  <!-- Builder topbar -->
+  <div class="h-16 border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#0A0A0A] flex items-center gap-2 md:gap-3 px-3 md:px-5 sticky top-16 z-[60]">
+    <button onclick="showView('dashboard')" class="w-9 h-9 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-900 flex items-center justify-center shrink-0" title="Back to dashboard">←</button>
+    <div class="min-w-0 flex-1 flex items-center gap-3">
+      <input id="builderName" oninput="renameFromBuilder(this.value)" class="font-extrabold tracking-tight text-base md:text-lg bg-transparent border-b border-transparent hover:border-neutral-300 focus:border-black dark:focus:border-white transition truncate max-w-[220px] md:max-w-[340px]"/>
+      <span id="saveStatus" class="hidden sm:inline-flex items-center gap-1.5 text-xs font-mono px-3 py-1.5 rounded-full bg-neutral-100 dark:bg-neutral-900 whitespace-nowrap"><span class="w-2 h-2 rounded-full bg-green-500"></span>Saved ✓</span>
+      <button id="atsBadge" onclick="openATS()" class="hidden md:inline-flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-full border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-900">◎ ATS <span id="atsBadgeScore">–</span></button>
+    </div>
+    <div class="flex items-center gap-1.5 md:gap-2">
+      <div class="flex lg:hidden bg-neutral-100 dark:bg-neutral-900 rounded-full p-1 text-xs font-bold">
+        <button onclick="setMobileTab('edit')" id="mtab-edit" class="px-3 py-1.5 rounded-full">Edit</button>
+        <button onclick="setMobileTab('preview')" id="mtab-preview" class="px-3 py-1.5 rounded-full">Preview</button>
+        <button onclick="setMobileTab('design')" id="mtab-design" class="px-3 py-1.5 rounded-full">Design</button>
+      </div>
+      <button onclick="openAI()" class="hidden sm:flex items-center gap-1.5 px-4 py-2.5 rounded-full border border-neutral-300 dark:border-neutral-700 text-sm font-bold hover:bg-neutral-100 dark:hover:bg-neutral-900">✦ AI</button>
+      <button onclick="openJD()" class="hidden sm:flex items-center gap-1.5 px-4 py-2.5 rounded-full border border-neutral-300 dark:border-neutral-700 text-sm font-bold hover:bg-neutral-100 dark:hover:bg-neutral-900">⬔ Match</button>
+      <button onclick="openATS()" class="sm:hidden w-10 h-10 rounded-full border border-neutral-300 dark:border-neutral-700 font-bold">◎</button>
+      <div class="relative">
+        <button onclick="document.getElementById('exportMenu').classList.toggle('hidden')" class="px-4 md:px-6 py-2.5 bg-black text-white dark:bg-white dark:text-black rounded-full text-sm font-bold hover:opacity-80 btn-press">Export ⤓</button>
+        <div id="exportMenu" class="hidden absolute right-0 top-12 w-60 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl shadow-2xl p-2 z-50">
+          <button onclick="exportPDF(true)" class="w-full text-left px-3 py-2.5 text-sm rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 font-semibold">📕 Download A4 PDF <span class="block text-[11px] font-normal opacity-60">Selectable text · print-perfect</span></button>
+          <button onclick="printResume()" class="w-full text-left px-3 py-2.5 text-sm rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 font-semibold">🖨 Print resume <span class="block text-[11px] font-normal opacity-60">Ctrl/⌘ + P</span></button>
+          <button onclick="exportTXT()" class="w-full text-left px-3 py-2.5 text-sm rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 font-semibold">📝 Export .txt <span class="block text-[11px] font-normal opacity-60">ATS plain-text check</span></button>
+          <button onclick="copyPlainText()" class="w-full text-left px-3 py-2.5 text-sm rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 font-semibold">📋 Copy plain text <span class="block text-[11px] font-normal opacity-60">Paste into job portals</span></button>
+          <button onclick="copyShareLink()" class="w-full text-left px-3 py-2.5 text-sm rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 font-semibold">🔗 Copy share link <span class="block text-[11px] font-normal opacity-60">Opens this resume on any device</span></button>
+          <button onclick="exportServer('html')" class="w-full text-left px-3 py-2.5 text-sm rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 font-semibold">🌐 Server export <span class="block text-[11px] font-normal opacity-60">Uses backend when online</span></button>
+          <button onclick="duplicateCurrent()" class="w-full text-left px-3 py-2.5 text-sm rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 font-semibold">⧉ Duplicate version</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="builder-grid">
+    <!-- LEFT: Editor -->
+    <aside id="colEdit" class="builder-col mobile-active border-r border-neutral-200 dark:border-neutral-800 overflow-y-auto bg-white dark:bg-[#0A0A0A]" style="max-height:calc(100vh - 128px)">
+      <div class="p-4 md:p-5">
+        <div class="flex items-center justify-between mb-3">
+          <div class="text-xs font-mono uppercase tracking-[.2em] opacity-50">Sections · <span id="completionLabel">0%</span></div>
+          <button onclick="openSectionOrder()" class="text-xs font-bold hover:underline">⇅ Reorder</button>
+        </div>
+        <div class="h-1.5 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden mb-4"><div id="completionBar" class="h-full bg-black dark:bg-white rounded-full transition-all duration-700" style="width:0%"></div></div>
+        <div id="editorAccordion" class="space-y-2.5"></div>
+        <div class="mt-5 border border-dashed border-neutral-300 dark:border-neutral-700 rounded-2xl p-4 text-center">
+          <div class="text-xs font-mono opacity-50 mb-2">POWER USER</div>
+          <div class="flex flex-wrap justify-center gap-2 text-xs font-bold">
+            <button onclick="toast('Award section toggled','success');toggleSection('awards')" class="px-3 py-1.5 rounded-full border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-900">+ Awards</button>
+            <button onclick="toast('Volunteering toggled','success');toggleSection('volunteering')" class="px-3 py-1.5 rounded-full border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-900">+ Volunteering</button>
+            <button onclick="toast('Interests toggled','success');toggleSection('interests')" class="px-3 py-1.5 rounded-full border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-900">+ Interests</button>
+            <button onclick="toast('References toggled','success');toggleSection('references')" class="px-3 py-1.5 rounded-full border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-900">+ References</button>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- CENTER: Preview -->
+    <section id="colPreview" class="builder-col overflow-y-auto bg-neutral-100 dark:bg-black dot-bg relative" style="max-height:calc(100vh - 128px)">
+      <div class="sticky top-0 z-20 flex items-center justify-center gap-2 py-3 bg-neutral-100/80 dark:bg-black/80 backdrop-blur border-b border-neutral-200 dark:border-neutral-800 no-print">
+        <button onclick="changeZoom(-10)" class="w-8 h-8 rounded-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 font-bold">−</button>
+        <span id="zoomLabel" class="text-xs font-mono w-12 text-center">70%</span>
+        <button onclick="changeZoom(10)" class="w-8 h-8 rounded-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 font-bold">+</button>
+        <span class="text-[11px] font-mono opacity-50 ml-2 hidden sm:inline">A4 · 210×297mm · theme-independent</span>
+      </div>
+      <div class="flex justify-center py-8 px-4">
+        <div id="previewScaler" style="transform:scale(.7);transform-origin:top center">
+          <div id="resumePreview" class="a4-paper rounded-[4px] overflow-hidden"></div>
+        </div>
+      </div>
+      <div class="lg:hidden fixed bottom-5 left-1/2 -translate-x-1/2 flex gap-2 z-40 no-print">
+        <button onclick="openAI()" class="px-5 py-3 bg-black text-white dark:bg-white dark:text-black rounded-full font-bold text-sm shadow-2xl">✦ AI Assist</button>
+        <button onclick="openATS()" class="px-5 py-3 bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-full font-bold text-sm shadow-2xl">◎ ATS Score</button>
+      </div>
+    </section>
+
+    <!-- RIGHT: Design -->
+    <aside id="colDesign" class="builder-col border-l border-neutral-200 dark:border-neutral-800 overflow-y-auto bg-white dark:bg-[#0A0A0A]" style="max-height:calc(100vh - 128px)">
+      <div class="p-4 md:p-5 space-y-6">
+        <div>
+          <div class="text-xs font-mono uppercase tracking-[.2em] opacity-50 mb-3">Template · <span id="tplName">Modern</span></div>
+          <div id="designTemplates" class="grid grid-cols-2 gap-2"></div>
+        </div>
+        <div>
+          <div class="text-xs font-mono uppercase tracking-[.2em] opacity-50 mb-3">Typography</div>
+          <label class="text-xs font-bold opacity-70">Font family</label>
+          <select id="setFont" onchange="updateSetting('font',this.value)" class="field mt-1.5 w-full border border-neutral-300 dark:border-neutral-700 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-black">
+            <option value="Inter">Inter — Modern Sans</option><option value="Georgia">Georgia — Classic Serif</option>
+            <option value="Merriweather">Merriweather — Editorial</option><option value="Lora">Lora — Elegant</option>
+            <option value="Playfair">Playfair Display — Premium</option><option value="Mono">JetBrains Mono — Technical</option>
+          </select>
+          <div class="mt-4 space-y-4">
+            <div><div class="flex justify-between text-xs font-bold opacity-70"><span>Body size</span><span id="vFontSize">10pt</span></div><input id="setFontSize" type="range" min="8.5" max="12" step="0.5" class="w-full mt-1" oninput="updateSetting('fontSize',this.value)"/></div>
+            <div><div class="flex justify-between text-xs font-bold opacity-70"><span>Heading size</span><span id="vHeading">14pt</span></div><input id="setHeading" type="range" min="11" max="20" step="0.5" class="w-full mt-1" oninput="updateSetting('headingSize',this.value)"/></div>
+            <div><div class="flex justify-between text-xs font-bold opacity-70"><span>Line height</span><span id="vLine">1.55</span></div><input id="setLine" type="range" min="1.3" max="1.9" step="0.05" class="w-full mt-1" oninput="updateSetting('lineHeight',this.value)"/></div>
+          </div>
+        </div>
+        <div>
+          <div class="text-xs font-mono uppercase tracking-[.2em] opacity-50 mb-3">Accent color</div>
+          <div id="swatches" class="flex flex-wrap gap-2.5"></div>
+          <div class="mt-3 flex items-center gap-2"><input id="customAccent" type="color" value="#111111" oninput="updateSetting('accent',this.value)" class="w-9 h-9 rounded-lg cursor-pointer border border-neutral-300"/><span class="text-xs opacity-60 font-mono">Custom hex</span></div>
+        </div>
+        <div>
+          <div class="text-xs font-mono uppercase tracking-[.2em] opacity-50 mb-3">Spacing & layout</div>
+          <div class="space-y-4">
+            <div><div class="flex justify-between text-xs font-bold opacity-70"><span>Section spacing</span><span id="vSpacing">18px</span></div><input id="setSpacing" type="range" min="8" max="32" step="1" class="w-full mt-1" oninput="updateSetting('spacing',this.value)"/></div>
+            <div><div class="flex justify-between text-xs font-bold opacity-70"><span>Page margins</span><span id="vMargins">40px</span></div><input id="setMargins" type="range" min="24" max="64" step="2" class="w-full mt-1" oninput="updateSetting('margins',this.value)"/></div>
+            <label class="flex items-center justify-between text-sm font-medium cursor-pointer">Show profile photo <input id="setPhoto" type="checkbox" checked onchange="updateSetting('showPhoto',this.checked)" class="w-5 h-5 accent-black dark:accent-white"/></label>
+            <label class="flex items-center justify-between text-sm font-medium cursor-pointer">Show skill pills <input id="setPills" type="checkbox" checked onchange="updateSetting('pills',this.checked)" class="w-5 h-5 accent-black dark:accent-white"/></label>
+          </div>
+        </div>
+        <div class="border border-neutral-200 dark:border-neutral-800 rounded-2xl p-4 text-xs leading-relaxed opacity-70">
+          <b class="opacity-100">Print guarantee:</b> app theme never affects the CV. Paper stays white, text stays dark, fonts stay embedded-print-safe.
+        </div>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<!-- ============ MODALS ============ -->
+<!-- New Resume -->
+<div id="modalNew" class="hidden fixed inset-0 z-[150] flex items-center justify-center p-4">
+  <div class="absolute inset-0 bg-black/60 modal-bg" onclick="closeModal('modalNew')"></div>
+  <div class="relative bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-3xl w-full max-w-3xl max-h-[90vh] overflow-y-auto p-7 md:p-9 slide-in">
+    <h3 class="text-2xl md:text-3xl font-extrabold tracking-tight">Create new resume</h3>
+    <p class="text-sm opacity-60 mt-1">Name your version, pick a starting template. Switch anytime — data is shared.</p>
+    <label class="block mt-6 text-xs font-bold uppercase tracking-widest opacity-60">Resume name</label>
+    <input id="newResumeName" placeholder="e.g. Frontend Developer CV" class="field mt-2 w-full border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-3.5 text-sm bg-white dark:bg-black"/>
+    <div class="mt-3 flex flex-wrap gap-2 text-xs font-bold">
+      <button onclick="document.getElementById('newResumeName').value='Frontend Developer CV'" class="px-3 py-1.5 rounded-full bg-neutral-100 dark:bg-neutral-900 hover:bg-neutral-200">Frontend Dev</button>
+      <button onclick="document.getElementById('newResumeName').value='Business Analyst CV'" class="px-3 py-1.5 rounded-full bg-neutral-100 dark:bg-neutral-900 hover:bg-neutral-200">Business Analyst</button>
+      <button onclick="document.getElementById('newResumeName').value='Graduate CV'" class="px-3 py-1.5 rounded-full bg-neutral-100 dark:bg-neutral-900 hover:bg-neutral-200">Graduate</button>
+      <button onclick="document.getElementById('newResumeName').value='Product Designer CV'" class="px-3 py-1.5 rounded-full bg-neutral-100 dark:bg-neutral-900 hover:bg-neutral-200">Designer</button>
+    </div>
+    <label class="block mt-6 text-xs font-bold uppercase tracking-widest opacity-60">Starting template</label>
+    <div id="newTplGrid" class="mt-3 grid grid-cols-2 md:grid-cols-4 gap-3"></div>
+    <label class="mt-6 flex items-center gap-3 text-sm cursor-pointer border border-neutral-200 dark:border-neutral-800 rounded-xl p-4">
+      <input id="newWithSample" type="checkbox" checked class="w-5 h-5 accent-black dark:accent-white"/> <span><b>Start with sample content</b><br/><span class="opacity-60 text-xs">Recommended — replace with your own details.</span></span>
+    </label>
+    <div class="mt-6 flex gap-2">
+      <button onclick="closeModal('modalNew')" class="flex-1 py-3.5 border border-neutral-300 dark:border-neutral-700 rounded-full font-bold text-sm">Cancel</button>
+      <button onclick="createResume()" class="flex-[2] py-3.5 bg-black text-white dark:bg-white dark:text-black rounded-full font-bold text-sm hover:opacity-80">Create & open builder →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Templates Gallery -->
+<div id="modalTemplates" class="hidden fixed inset-0 z-[150] flex items-center justify-center p-4">
+  <div class="absolute inset-0 bg-black/60 modal-bg" onclick="closeModal('modalTemplates')"></div>
+  <div class="relative bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-3xl w-full max-w-5xl max-h-[90vh] overflow-y-auto p-7 md:p-9 slide-in">
+    <h3 class="text-2xl md:text-3xl font-extrabold tracking-tight">Template gallery</h3>
+    <p class="text-sm opacity-60 mt-1">All templates share one dataset. Switching never loses content.</p>
+    <div id="galleryGrid" class="mt-6 grid sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+    <button onclick="closeModal('modalTemplates')" class="mt-6 w-full py-3.5 border border-neutral-300 dark:border-neutral-700 rounded-full font-bold text-sm">Close</button>
+  </div>
+</div>
+
+<!-- Section order -->
+<div id="modalOrder" class="hidden fixed inset-0 z-[150] flex items-center justify-center p-4">
+  <div class="absolute inset-0 bg-black/60 modal-bg" onclick="closeModal('modalOrder')"></div>
+  <div class="relative bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-3xl w-full max-w-md p-7 slide-in">
+    <h3 class="text-xl font-extrabold">⇅ Section order</h3>
+    <p class="text-xs opacity-60 mt-1">Reorder how sections appear on the page. Eye toggles visibility.</p>
+    <div id="orderList" class="mt-4 space-y-2"></div>
+    <button onclick="closeModal('modalOrder')" class="mt-5 w-full py-3 bg-black text-white dark:bg-white dark:text-black rounded-full font-bold text-sm">Done</button>
+  </div>
+</div>
+
+<!-- ATS Modal -->
+<div id="modalATS" class="hidden fixed inset-0 z-[150] flex items-center justify-center p-4">
+  <div class="absolute inset-0 bg-black/60 modal-bg" onclick="closeModal('modalATS')"></div>
+  <div class="relative bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-3xl w-full max-w-3xl max-h-[90vh] overflow-y-auto p-7 md:p-9 slide-in">
+    <div class="flex items-start justify-between gap-4">
+      <div><h3 class="text-2xl md:text-3xl font-extrabold tracking-tight">◎ ATS Compatibility</h3>
+      <p class="text-sm opacity-60 mt-1">POST /api/ai/analyze-resume/ · Estimated score — does not guarantee ATS acceptance.</p></div>
+      <button onclick="closeModal('modalATS')" class="w-9 h-9 rounded-full border border-neutral-300 dark:border-neutral-700 shrink-0">✕</button>
+    </div>
+    <div class="mt-6 grid md:grid-cols-[220px_1fr] gap-6 items-start">
+      <div class="text-center border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6">
+        <svg width="140" height="140" viewBox="0 0 140 140" class="mx-auto">
+          <circle cx="70" cy="70" r="58" fill="none" stroke-width="12" class="stroke-neutral-200 dark:stroke-neutral-800"/>
+          <circle id="atsRing" cx="70" cy="70" r="58" fill="none" stroke="#111" stroke-width="12" stroke-linecap="round" transform="rotate(-90 70 70)" class="score-ring dark:stroke-white" stroke-dasharray="364.4" stroke-dashoffset="364.4"/>
+          <text id="atsBig" x="70" y="66" text-anchor="middle" font-size="32" font-weight="800" class="fill-black dark:fill-white">–</text>
+          <text x="70" y="88" text-anchor="middle" font-size="11" class="fill-neutral-500">/ 100</text>
+        </svg>
+        <div id="atsVerdict" class="mt-2 font-bold text-sm"></div>
+        <button onclick="runATS(true)" class="mt-3 text-xs font-mono px-4 py-2 rounded-full border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-900">↻ Re-analyze</button>
+      </div>
+      <div id="atsChecks" class="space-y-2.5"></div>
+    </div>
+    <div id="atsFixes" class="mt-5 flex flex-wrap gap-2"></div>
+    <div class="mt-6 border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 rounded-2xl p-4 text-xs leading-relaxed">⚠ <b>Disclaimer:</b> This score is an estimate based on structure, contact info, headings, keywords, skills, dates and formatting. Real ATS systems vary by vendor. It does not guarantee acceptance.</div>
+  </div>
+</div>
+
+<!-- JD Modal -->
+<div id="modalJD" class="hidden fixed inset-0 z-[150] flex items-center justify-center p-4">
+  <div class="absolute inset-0 bg-black/60 modal-bg" onclick="closeModal('modalJD')"></div>
+  <div class="relative bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-y-auto p-7 md:p-9 slide-in">
+    <div class="flex items-start justify-between gap-4">
+      <div><h3 class="text-2xl md:text-3xl font-extrabold tracking-tight">⬔ Job Description Analyzer</h3>
+      <p class="text-sm opacity-60 mt-1">Paste a JD → extract skills → compare → fork a tailored copy.</p></div>
+      <button onclick="closeModal('modalJD')" class="w-9 h-9 rounded-full border border-neutral-300 dark:border-neutral-700 shrink-0">✕</button>
+    </div>
+    <div class="mt-5 grid lg:grid-cols-2 gap-4">
+      <div>
+        <label class="text-xs font-bold uppercase tracking-widest opacity-60">Job description</label>
+        <textarea id="jdInput" rows="12" placeholder="Paste the full job description here…&#10;&#10;e.g. We are hiring a Frontend Developer with React, TypeScript, REST APIs, testing, CI/CD…" class="field mt-2 w-full border border-neutral-300 dark:border-neutral-700 rounded-2xl px-4 py-3 text-sm bg-white dark:bg-black leading-relaxed"></textarea>
+        <div class="mt-2 flex gap-2">
+          <button onclick="fillSampleJD()" class="text-xs font-bold px-4 py-2 rounded-full bg-neutral-100 dark:bg-neutral-900 hover:bg-neutral-200">Try sample JD</button>
+          <button onclick="analyzeJD()" class="flex-1 py-2.5 bg-black text-white dark:bg-white dark:text-black rounded-full font-bold text-sm hover:opacity-80">Analyze match →</button>
+        </div>
+      </div>
+      <div id="jdResults" class="border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 bg-neutral-50 dark:bg-neutral-900/40">
+        <div class="text-center py-10 opacity-50 text-sm">Results appear here.<br/><span class="font-mono text-xs">POST /api/ai/analyze-job/</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Profile -->
+<div id="modalProfile" class="hidden fixed inset-0 z-[150] flex items-center justify-center p-4">
+  <div class="absolute inset-0 bg-black/60 modal-bg" onclick="closeModal('modalProfile')"></div>
+  <div class="relative bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-3xl w-full max-w-md p-7 slide-in">
+    <h3 class="text-xl font-extrabold">Profile & settings</h3>
+    <label class="block mt-5 text-xs font-bold uppercase tracking-widest opacity-60">Display name</label>
+    <input id="profileName" class="field mt-2 w-full border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-black"/>
+    <label class="block mt-4 text-xs font-bold uppercase tracking-widest opacity-60">Email</label>
+    <input id="profileEmail" disabled class="mt-2 w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-4 py-3 text-sm opacity-60"/>
+    <label class="block mt-4 text-xs font-bold uppercase tracking-widest opacity-60">New password (optional)</label>
+    <input id="profilePass" type="password" placeholder="Leave blank to keep current" class="field mt-2 w-full border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-black"/>
+    <div class="mt-4 flex items-center justify-between border border-neutral-200 dark:border-neutral-800 rounded-xl px-4 py-3 text-sm font-semibold">
+      <span>◐ Dark mode</span>
+      <button onclick="toggleTheme()" id="profileThemeBtn" class="px-4 py-1.5 rounded-full bg-black text-white dark:bg-white dark:text-black text-xs font-bold">Toggle</button>
+    </div>
+    <div class="mt-4 border border-neutral-200 dark:border-neutral-800 rounded-xl px-4 py-3">
+      <div class="text-xs font-bold uppercase tracking-widest opacity-60">Backend API (optional)</div>
+      <div class="mt-2 flex gap-2">
+        <input id="apiBaseInput" placeholder="http://localhost:8000" class="field flex-1 border border-neutral-300 dark:border-neutral-700 rounded-lg px-3 py-2 text-xs bg-white dark:bg-black font-mono"/>
+        <button onclick="saveApiBase()" class="px-4 py-2 rounded-lg bg-black text-white dark:bg-white dark:text-black text-xs font-bold">Connect</button>
+      </div>
+      <div class="mt-2 flex items-center justify-between text-xs">
+        <span data-api-badge class="opacity-60">API · Offline (local mode)</span>
+        <button onclick="pullFromBackend().then(ok=>toast(ok?'Pulled from backend ✓':'Nothing to pull / offline','info'))" class="underline opacity-60">Pull resumes</button>
+      </div>
+      <p class="mt-1 text-[11px] opacity-50">Leave default for local dev. Empty + Connect = offline localStorage mode.</p>
+    </div>
+    <div class="mt-4 flex gap-2">
+      <button onclick="closeModal('modalProfile')" class="flex-1 py-3 border border-neutral-300 dark:border-neutral-700 rounded-full font-bold text-sm">Cancel</button>
+      <button onclick="saveProfile()" class="flex-1 py-3 bg-black text-white dark:bg-white dark:text-black rounded-full font-bold text-sm">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Rename -->
+<div id="modalRename" class="hidden fixed inset-0 z-[150] flex items-center justify-center p-4">
+  <div class="absolute inset-0 bg-black/60 modal-bg" onclick="closeModal('modalRename')"></div>
+  <div class="relative bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-3xl w-full max-w-sm p-7 slide-in">
+    <h3 class="text-xl font-extrabold">Rename resume</h3>
+    <input id="renameInput" class="field mt-4 w-full border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-black"/>
+    <div class="mt-4 flex gap-2">
+      <button onclick="closeModal('modalRename')" class="flex-1 py-3 border border-neutral-300 dark:border-neutral-700 rounded-full font-bold text-sm">Cancel</button>
+      <button onclick="confirmRename()" class="flex-1 py-3 bg-black text-white dark:bg-white dark:text-black rounded-full font-bold text-sm">Rename</button>
+    </div>
+  </div>
+</div>
+
+<!-- AI Drawer -->
+<div id="aiDrawer" class="hidden fixed inset-0 z-[150]">
+  <div class="absolute inset-0 bg-black/50 modal-bg" onclick="closeAI()"></div>
+  <div class="drawer absolute right-0 top-0 bottom-0 w-full max-w-[480px] bg-white dark:bg-neutral-950 border-l border-neutral-200 dark:border-neutral-800 flex flex-col slide-in">
+    <div class="p-6 border-b border-neutral-200 dark:border-neutral-800">
+      <div class="flex items-center justify-between">
+        <div><div class="text-xs font-mono uppercase tracking-[.2em] opacity-50">✦ AI Career Assistant</div>
+        <h3 class="text-xl font-extrabold mt-1">Improve, never invent.</h3></div>
+        <button onclick="closeAI()" class="w-9 h-9 rounded-full border border-neutral-300 dark:border-neutral-700">✕</button>
+      </div>
+      <div class="mt-4 flex bg-neutral-100 dark:bg-neutral-900 rounded-full p-1 text-xs font-bold">
+        <button onclick="setAiTab('summary')" id="aiTab-summary" class="flex-1 py-2 rounded-full">Summary</button>
+        <button onclick="setAiTab('bullets')" id="aiTab-bullets" class="flex-1 py-2 rounded-full">Bullets</button>
+        <button onclick="setAiTab('audit')" id="aiTab-audit" class="flex-1 py-2 rounded-full">Audit</button>
+      </div>
+    </div>
+    <div class="flex-1 overflow-y-auto p-6" id="aiBody"></div>
+    <div class="p-4 border-t border-neutral-200 dark:border-neutral-800 text-[11px] opacity-60 leading-relaxed">Rate-limited · AI refines your wording only. It will not fabricate employers, dates, metrics or qualifications. Always review before applying.</div>
+  </div>
+</div>
+
+<div id="print-root"></div>
+
+<script>
+/* ================================================================
+   MONO STUDIO — Resume Builder SaaS (front-end simulation of
+   React + Django DRF + PostgreSQL + JWT architecture)
+================================================================ */
+const LS_KEY = 'mono_studio_db_v2';
+const $ = id => document.getElementById(id);
+const uid = () => 'id_' + Math.random().toString(36).slice(2,10) + Date.now().toString(36);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtDate = ts => new Date(ts).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+const timeAgo = ts => { const s=(Date.now()-ts)/1000; if(s<60)return'just now'; if(s<3600)return Math.floor(s/60)+'m ago'; if(s<86400)return Math.floor(s/3600)+'h ago'; if(s<86400*7)return Math.floor(s/86400)+'d ago'; return fmtDate(ts); };
+function hashPw(pw){ let h1=0xdeadbeef,h2=0x41c6ce57; const s='mono_salt_'+pw; for(let i=0;i<s.length;i++){const ch=s.charCodeAt(i); h1=Math.imul(h1^ch,2654435761); h2=Math.imul(h2^ch,1597334677);} h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909); h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909); return (h2>>>0).toString(16)+(h1>>>0).toString(16); }
+
+/* ---------- DB (local-first, backend-optional) ---------- */
+let DB = { users:[], resumes:[], session:null, theme:'light' };
+try { const raw = localStorage.getItem(LS_KEY); if(raw) DB = JSON.parse(raw); } catch(e){}
+function persist(){ localStorage.setItem(LS_KEY, JSON.stringify(DB)); queueBackendPush(); }
+const currentUser = () => DB.users.find(u=>u.id===DB.session) || null;
+const userResumes = () => DB.resumes.filter(r=>r.ownerId===DB.session);
+
+/* ---------- Backend API adapter (offline fallback) ---------- */
+// ?api=https://... overrides stored base (deploy-friendly); empty ?api= forces offline mode.
+let API_BASE = (()=>{ try{
+  const q=new URLSearchParams(location.search).get('api');
+  if(q!==null){ if(q) localStorage.setItem('mono_api_base',q.replace(/\/$/,'')); else localStorage.removeItem('mono_api_base'); }
+} catch(e){} return (localStorage.getItem('mono_api_base') || 'http://localhost:8000').replace(/\/$/,''); })();
+let API_TOKEN = sessionStorage.getItem('mono_api_token') || localStorage.getItem('mono_api_token') || '';
+let API_ONLINE = false;
+async function api(path, opts={}){
+  if(!API_BASE) throw new Error('API disabled');
+  const ctl=new AbortController(); const to=setTimeout(()=>ctl.abort(),12000);
+  try{
+    const res = await fetch(API_BASE + path, {
+      ...opts, signal: opts.signal || ctl.signal,
+      headers: { 'Content-Type':'application/json', ...(API_TOKEN?{Authorization:'Bearer '+API_TOKEN}:{}), ...(opts.headers||{}) }
+    });
+    if(res.status===401) { API_TOKEN=''; sessionStorage.removeItem('mono_api_token'); localStorage.removeItem('mono_api_token'); }
+    if(!res.ok){ const t=await res.text().catch(()=> ''); throw new Error((t||('HTTP '+res.status)).slice(0,300)); }
+    const ct=res.headers.get('content-type')||'';
+    return ct.includes('json') ? res.json() : res.text();
+  } finally { clearTimeout(to); }
+}
+async function checkBackend(silent=true){
+  if(!API_BASE){ API_ONLINE=false; updateApiBadge(); return false; }
+  try{
+    const ctl=new AbortController(); const to=setTimeout(()=>ctl.abort(),2500);
+    const r=await fetch(API_BASE+'/api/health',{signal:ctl.signal}); clearTimeout(to);
+    API_ONLINE=r.ok; updateApiBadge();
+    if(r.ok&&!silent) toast('Backend connected ✓ ('+API_BASE+')');
+    return r.ok;
+  }catch(e){ API_ONLINE=false; updateApiBadge(); return false; }
+}
+function updateApiBadge(){
+  document.querySelectorAll('[data-api-badge]').forEach(el=>{
+    el.innerHTML = API_ONLINE
+      ? '<span class="w-2 h-2 rounded-full bg-green-500 pulse-dot"></span> API · Connected'
+      : '<span class="w-2 h-2 rounded-full bg-neutral-400"></span> API · Offline (local mode)';
+  });
+}
+let _pushT=null;
+function queueBackendPush(){
+  if(!API_ONLINE||!API_TOKEN) return;
+  clearTimeout(_pushT);
+  _pushT=setTimeout(pushCurrentToBackend,1500);
+}
+async function pushCurrentToBackend(){
+  const r=cur(); if(!r||!API_ONLINE||!API_TOKEN) return;
+  try{ await api('/api/resumes/'+r.id+'/', {method:'PATCH', body:JSON.stringify(r)}); }
+  catch(e){ /* keep local-first; backend may not have this id yet */ try{ await api('/api/resumes/',{method:'POST',body:JSON.stringify(r)}); }catch(_){} }
+}
+async function pullFromBackend(){
+  if(!API_ONLINE||!API_TOKEN) return false;
+  try{
+    const data=await api('/api/resumes/?limit=100');
+    const list=Array.isArray(data)?data:(data&&data.items)||[];
+    if(list.length || Array.isArray(data) || (data&&data.items)){
+      const ids=new Set(DB.resumes.map(x=>x.id));
+      list.forEach(r=>{ if(r&&r.id&&!ids.has(r.id)) DB.resumes.push(r); });
+      persist(); return true;
+    }
+  }catch(e){}
+  return false;
+}
+async function aiViaBackend(path, payload){
+  if(!API_ONLINE) return null;
+  try{ return await api(path,{method:'POST',body:JSON.stringify(payload)}); }
+  catch(e){ return null; }
+}
+
+/* ---------- Theme ---------- */
+function applyTheme(){ const dark = DB.theme==='dark'; document.documentElement.classList.toggle('dark',dark); document.documentElement.classList.toggle('light',!dark); }
+function toggleTheme(){ DB.theme = DB.theme==='dark'?'light':'dark'; persist(); applyTheme(); toast(DB.theme==='dark'?'Dark mode on ◐':'Light mode on ☀','info'); }
+applyTheme();
+
+/* ---------- Navigation ---------- */
+const VIEWS = ['landing','auth','dashboard','builder'];
+function showView(v){
+  VIEWS.forEach(x=>$('view-'+x).classList.add('hidden'));
+  $('view-'+v).classList.remove('hidden');
+  window.scrollTo({top:0});
+  if(v==='dashboard') renderDashboard();
+  updateNav();
+}
+function goHome(){ if(DB.session) showView('dashboard'); else showView('landing'); }
+function scrollToId(id){ showView('landing'); setTimeout(()=>document.getElementById(id)?.scrollIntoView({behavior:'smooth'}),80); }
+function updateNav(){
+  const u = currentUser();
+  $('navAuth').style.display = u?'none':'flex';
+  $('navUser').style.display = u?'flex':'none';
+  if(u){ $('avatarBtn').textContent = (u.name||u.email||'U')[0].toUpperCase(); $('userMenuName').textContent=u.name; $('userMenuEmail').textContent=u.email; }
+}
+function toggleUserMenu(){ $('userMenu').classList.toggle('hidden'); }
+document.addEventListener('click',e=>{ if(!$('avatarBtn')?.contains(e.target) && !$('userMenu')?.contains(e.target)) $('userMenu')?.classList.add('hidden'); if(!$('exportMenu')?.parentElement?.contains(e.target)) $('exportMenu')?.classList.add('hidden'); });
+
+/* ---------- Toast ---------- */
+function toast(msg,type='success'){
+  const colors={success:'bg-black text-white dark:bg-white dark:text-black',info:'bg-neutral-800 text-white dark:bg-neutral-200 dark:text-black',error:'bg-red-600 text-white',warn:'bg-amber-500 text-black'};
+  const icons={success:'✓',info:'●',error:'✕',warn:'⚠'};
+  const el=document.createElement('div');
+  el.className=`toast-in ${colors[type]} px-5 py-3.5 rounded-2xl shadow-2xl text-sm font-semibold flex items-center gap-2.5 max-w-sm`;
+  el.innerHTML=`<span class="w-6 h-6 rounded-full bg-white/20 dark:bg-black/10 flex items-center justify-center text-xs shrink-0">${icons[type]}</span><span>${esc(msg)}</span>`;
+  $('toasts').appendChild(el);
+  setTimeout(()=>{el.style.opacity='0';el.style.transform='translateY(8px)';el.style.transition='all .3s';setTimeout(()=>el.remove(),320)},3200);
+}
+
+/* ---------- Auth ---------- */
+let authMode='login', pendingReset=false;
+function setAuthMode(m){
+  authMode=m;
+  const login = m==='login';
+  $('tabLogin').className='flex-1 py-2.5 rounded-full transition '+(login?'bg-white dark:bg-black shadow font-extrabold':'opacity-60');
+  $('tabRegister').className='flex-1 py-2.5 rounded-full transition '+(!login?'bg-white dark:bg-black shadow font-extrabold':'opacity-60');
+  $('authTitle').textContent = login?'Welcome back':'Create your account';
+  $('authSub').textContent = login?'Log in to your resume dashboard.':'Free forever plan. Upgrade when ready.';
+  $('nameField').classList.toggle('hidden',login);
+  $('passHint').classList.toggle('hidden',login);
+  $('authSubmit').textContent = login?'Log in →':'Create account →';
+}
+function togglePass(){ const i=$('authPass'); i.type=i.type==='password'?'text':'password'; }
+function fillDemo(){ $('authEmail').value='demo@mono.studio'; $('authPass').value='demo1234'; if(authMode!=='login')setAuthMode('login'); toast('Demo credentials filled — hit Log in','info'); }
+function resetPassword(){
+  const em=$('authEmail').value.trim();
+  if(!em){toast('Enter your email first','warn');return;}
+  toast('Password reset link sent to '+em+' (simulated)','info');
+}
+function submitAuth(){
+  const email=$('authEmail').value.trim().toLowerCase(), pass=$('authPass').value, name=$('authName').value.trim();
+  if(!email||!/.+@.+\..+/.test(email)){toast('Enter a valid email','error');return;}
+  if(!pass||pass.length<6){toast('Password must be 6+ characters','error');return;}
+  if(authMode==='register'){
+    if(!name){toast('Enter your full name','error');return;}
+    if(DB.users.find(u=>u.email===email)){toast('Account exists — please log in','warn');setAuthMode('login');return;}
+    const u={id:uid(),name,email,pw:hashPw(pass),createdAt:Date.now()};
+    DB.users.push(u); DB.session=u.id; persist();
+    seedSampleResume(u.id);
+    toast('Account created — welcome, '+name.split(' ')[0]+'!','success');
+    mirrorAuthToBackend('register',email,pass,name);
+    showView('dashboard');
+  } else {
+    // demo seed
+    if(email==='demo@mono.studio'&&pass==='demo1234'&&!DB.users.find(u=>u.email===email)){
+      const u={id:uid(),name:'Demo User',email,pw:hashPw(pass),createdAt:Date.now()};
+      DB.users.push(u); seedSampleResume(u.id);
+    }
+    const u=DB.users.find(u=>u.email===email&&u.pw===hashPw(pass));
+    if(!u){toast('Invalid email or password','error');return;}
+    DB.session=u.id; persist();
+    toast('Welcome back, '+u.name.split(' ')[0]+'!','success');
+    mirrorAuthToBackend('login',email,pass);
+    pullFromBackend().then(()=>{ if(!$('view-dashboard').classList.contains('hidden')) renderDashboard(); });
+    showView('dashboard');
+  }
+}
+function logout(){ DB.session=null; API_TOKEN=''; sessionStorage.removeItem('mono_api_token'); localStorage.removeItem('mono_api_token'); persist(); updateNav(); showView('landing'); toast('Logged out securely','info'); }
+function handleGetStarted(){ if(DB.session) showView('dashboard'); else { showView('auth'); setAuthMode('register'); } }
+function openProfile(){ const u=currentUser(); if(!u)return; $('profileName').value=u.name; $('profileEmail').value=u.email; $('profilePass').value=''; $('apiBaseInput').value=API_BASE; openModal('modalProfile'); $('userMenu').classList.add('hidden'); }
+function saveProfile(){ const u=currentUser(); const n=$('profileName').value.trim(); if(n)u.name=n; const p=$('profilePass').value; if(p){ if(p.length<6){toast('Password too short','error');return;} u.pw=hashPw(p);} persist(); updateNav(); closeModal('modalProfile'); toast('Profile updated ✓'); }
+async function saveApiBase(){
+  const v=($('apiBaseInput').value||'').trim().replace(/\/$/,'');
+  API_BASE=v; if(v) localStorage.setItem('mono_api_base',v); else localStorage.removeItem('mono_api_base');
+  const ok=await checkBackend(false);
+  toast(ok?'Backend connected ✓':'Backend unreachable — staying in local mode', ok?'success':'warn');
+}
+// Mirror local auth to backend when online (non-blocking, local-first)
+async function mirrorAuthToBackend(mode,email,pass,name){
+  if(!API_ONLINE||!API_BASE) return;
+  try{
+    const path=mode==='register'?'/api/auth/register/':'/api/auth/login/';
+    const body=mode==='register'?{name,email,password:pass}:{email,password:pass};
+    const r=await api(path,{method:'POST',body:JSON.stringify(body)});
+    if(r&&r.token){ API_TOKEN=r.token; try{sessionStorage.setItem('mono_api_token',API_TOKEN);}catch(e){} localStorage.setItem('mono_api_token',API_TOKEN); }
+    if(r&&r.user){ toast('Backend account linked ✓ ('+r.user.email+')','info'); pullFromBackend(); }
+  }catch(e){ /* local-first: ignore backend auth errors */ }
+}
+
+/* ---------- Resume model ---------- */
+const TEMPLATES = [
+  {id:'modern',name:'Modern',desc:'Sidebar + accent bar. Confident & current.',badge:'POPULAR'},
+  {id:'minimal',name:'Minimal',desc:'Centered, airy, typographic calm.',badge:'CLEAN'},
+  {id:'professional',name:'Professional',desc:'Bold header band. Corporate-ready.',badge:'CLASSIC'},
+  {id:'ats',name:'ATS-Friendly',desc:'Zero graphics. Maximum parseability.',badge:'SAFE'}
+];
+const ACCENTS = ['#0A0A0A','#1E3A5F','#1B4D3E','#7C2D2D','#4338CA','#0F766E','#92400E'];
+const FONTS = {Inter:"'Inter',sans-serif",Georgia:"Georgia,'Times New Roman',serif",Merriweather:"'Merriweather',Georgia,serif",Lora:"'Lora',Georgia,serif",Playfair:"'Playfair Display',Georgia,serif",Mono:"'JetBrains Mono',monospace"};
+const SECTION_LABELS = {summary:'Professional Summary',experience:'Work Experience',education:'Education',skills:'Skills',projects:'Projects',certifications:'Certifications',languages:'Languages',awards:'Awards',volunteering:'Volunteering',interests:'Interests',references:'References'};
+const DEFAULT_ORDER = ['summary','experience','education','skills','projects','certifications','languages','awards','volunteering','interests','references'];
+
+function blankResume(ownerId,name,template,withSample){
+  const r={ id:uid(), ownerId, name:name||'Untitled Resume', template:template||'modern',
+    createdAt:Date.now(), updatedAt:Date.now(),
+    settings:{font:'Inter',fontSize:10,headingSize:14,lineHeight:1.55,accent:'#0A0A0A',spacing:18,margins:40,showPhoto:true,pills:true},
+    sectionOrder:[...DEFAULT_ORDER], hidden:[],
+    personal:{fullName:'',title:'',email:'',phone:'',location:'',website:'',linkedin:'',github:'',portfolio:'',photo:''},
+    summary:'', experience:[], education:[], skills:{technical:[],tools:[],soft:[],languages:[]}, projects:[], certifications:[],
+    languages:[], awards:[], volunteering:[], interests:'', references:''
+  };
+  if(withSample) fillSample(r);
+  return r;
+}
+function fillSample(r){
+  r.personal={fullName:'Amara Okafor',title:'Senior Frontend Developer',email:'amara.okafor@email.com',phone:'+234 801 234 5678',location:'Lagos, Nigeria',website:'amara.dev',linkedin:'linkedin.com/in/amaraokafor',github:'github.com/amaraokafor',portfolio:'amara.dev/work',photo:''};
+  r.summary='Frontend developer with 5+ years building responsive, accessible web applications for fintech and e-commerce. Specialized in React, TypeScript and design systems. Passionate about performance, clean architecture and mentoring engineering teams.';
+  r.experience=[
+    {id:uid(),jobTitle:'Senior Frontend Engineer',company:'Paystack',location:'Lagos, Nigeria',start:'2022-03',end:'',current:true,description:'Leading checkout experience for West African markets.',bullets:['Developed responsive checkout interfaces serving 2M+ monthly users across desktop and mobile','Reduced page load time by 42% through code-splitting, lazy loading and image optimization','Led migration of legacy jQuery modules to React, improving maintainability for 12 engineers','Collaborated with designers to ship accessible component library adopted by 4 product teams']},
+    {id:uid(),jobTitle:'UI Developer',company:'Cowrywise',location:'Lagos, Nigeria',start:'2020-06',end:'2022-02',current:false,description:'Built savings and investment dashboards.',bullets:['Built interactive savings dashboards used by 500K+ customers with React and D3.js','Improved form conversion by 18% by redesigning onboarding flow with product team','Wrote unit and integration tests achieving 85% coverage across critical user flows']}
+  ];
+  r.education=[{id:uid(),institution:'University of Lagos',degree:'B.Sc.',field:'Computer Science',start:'2016',end:'2020',gpa:'4.2/5.0',description:'Graduated with honours. Final-year project on accessible web interfaces.'}];
+  r.skills={technical:['React','TypeScript','JavaScript','Next.js','HTML/CSS'],tools:['Git','Figma','Docker','Vite','Jest'],soft:['Leadership','Communication','Mentoring','Agile'],languages:['Python','SQL']};
+  r.projects=[
+    {id:uid(),name:'DevJobs Board',description:'Job board for African developers with filters, saved searches and email alerts. 10K monthly visitors.',tech:['Next.js','Tailwind','PostgreSQL'],url:'devjobs.example.com',github:'github.com/amaraokafor/devjobs',date:'2024'},
+    {id:uid(),name:'A11y Component Kit',description:'Open-source accessible React components with full keyboard support and ARIA coverage.',tech:['React','TypeScript','Storybook'],url:'',github:'github.com/amaraokafor/a11y-kit',date:'2023'}
+  ];
+  r.certifications=[{id:uid(),name:'AWS Certified Cloud Practitioner',org:'Amazon Web Services',start:'2023',end:'2026',credId:'AWS-88213',url:''}];
+  r.languages=[{lang:'English',level:'Native'},{lang:'French',level:'Professional'}];
+  r.awards=[{title:'Best Fintech UI',org:'Design Week Lagos',date:'2023',desc:'Awarded for checkout redesign.'}];
+  r.hidden=['volunteering','interests','references'];
+  return r;
+}
+function seedSampleResume(ownerId){
+  if(DB.resumes.some(r=>r.ownerId===ownerId)) return;
+  const r=blankResume(ownerId,'Frontend Developer CV','modern',true);
+  DB.resumes.push(r); persist();
+}
+
+/* ---------- Dashboard ---------- */
+function completionOf(r){
+  let pts=0,total=0; const has=v=>v&&String(v).trim().length>0;
+  const checks=[has(r.personal.fullName),has(r.personal.title),has(r.personal.email),has(r.personal.phone),has(r.personal.location),r.summary&&r.summary.length>40,r.experience.length>0,r.experience.some(e=>e.bullets&&e.bullets.length>0),r.education.length>0,Object.values(r.skills).flat().length>=5,r.projects.length>0,r.certifications.length>0||r.languages.length>0];
+  checks.forEach(c=>{total++;if(c)pts++;});
+  return Math.round(pts/total*100);
+}
+function quickATS(r){ return computeATS(r).score; }
+function renderDashboard(){
+  const u=currentUser(); if(!u){showView('auth');return;}
+  const h=new Date().getHours(); $('dayPart').textContent=h<12?'morning':h<17?'afternoon':'evening';
+  $('dashName').textContent=u.name.split(' ')[0];
+  let list=userResumes();
+  const q=($('dashSearch').value||'').toLowerCase();
+  if(q) list=list.filter(r=>r.name.toLowerCase().includes(q)||r.personal.fullName.toLowerCase().includes(q)||r.personal.title.toLowerCase().includes(q));
+  const sort=$('dashSort').value;
+  list.sort((a,b)=> sort==='name'?a.name.localeCompare(b.name): sort==='completion'?completionOf(b)-completionOf(a): sort==='created'?b.createdAt-a.createdAt: b.updatedAt-a.updatedAt);
+  $('resumeCount').textContent='('+userResumes().length+')';
+  // stats
+  const all=userResumes();
+  const avgC=all.length?Math.round(all.reduce((s,r)=>s+completionOf(r),0)/all.length):0;
+  const avgA=all.length?Math.round(all.reduce((s,r)=>s+quickATS(r),0)/all.length):0;
+  const lastEdit=all.length?timeAgo(Math.max(...all.map(r=>r.updatedAt))):'—';
+  $('dashStats').innerHTML=[
+    {l:'TOTAL RESUMES',v:all.length,i:'▦'},{l:'AVG COMPLETION',v:avgC+'%',i:'◔'},{l:'AVG ATS SCORE',v:all.length?avgA:'—',i:'◎'},{l:'LAST EDITED',v:lastEdit,i:'◷'}
+  ].map(s=>`<div class="border border-neutral-200 dark:border-neutral-800 rounded-2xl p-4 md:p-5 bg-white dark:bg-neutral-950 flex items-center gap-4"><div class="w-11 h-11 rounded-xl bg-black text-white dark:bg-white dark:text-black flex items-center justify-center text-lg shrink-0">${s.i}</div><div class="min-w-0"><div class="text-[10px] font-mono opacity-50 tracking-widest">${s.l}</div><div class="font-extrabold text-xl truncate">${s.v}</div></div></div>`).join('');
+  $('dashEmpty').classList.toggle('hidden',list.length>0);
+  $('resumeGrid').innerHTML=list.map(r=>{
+    const c=completionOf(r), ats=quickATS(r);
+    const t=TEMPLATES.find(t=>t.id===r.template);
+    return `<div class="group border border-neutral-200 dark:border-neutral-800 rounded-2xl overflow-hidden bg-white dark:bg-neutral-950 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
+      <div class="h-44 bg-neutral-100 dark:bg-neutral-900 relative overflow-hidden cursor-pointer" onclick="openBuilder('${r.id}')">
+        <div class="absolute inset-0 p-5 pointer-events-none" style="transform:scale(.92);transform-origin:top left">
+          <div class="bg-white text-black rounded-lg shadow-lg p-4 h-full overflow-hidden" style="font-size:9px;line-height:1.6">
+            <div class="font-extrabold text-[13px] tracking-tight">${esc(r.personal.fullName||'Your Name')}</div>
+            <div class="uppercase tracking-widest opacity-50 text-[8px] font-bold">${esc(r.personal.title||'Professional Title')}</div>
+            <div class="mt-1.5 h-[2px]" style="background:${esc(r.settings.accent)}"></div>
+            <div class="mt-2 font-bold text-[8px] tracking-widest opacity-70">EXPERIENCE</div>
+            ${(r.experience.slice(0,2).map(e=>`<div class="mt-1"><b>${esc(e.jobTitle||'Role')}</b> <span class="opacity-50">· ${esc(e.company||'Company')}</span></div>`).join('')||'<div class="opacity-40 mt-1">No experience added yet…</div>')}
+            <div class="mt-2 font-bold text-[8px] tracking-widest opacity-70">SKILLS</div>
+            <div class="mt-1 flex flex-wrap gap-1">${Object.values(r.skills).flat().slice(0,4).map(s=>`<span class="border border-black/30 px-1.5 rounded-full">${esc(s)}</span>`).join('')||'<span class="opacity-40">Add skills…</span>'}</div>
+          </div>
+        </div>
+        <div class="absolute top-3 left-3 flex gap-1.5">
+          <span class="text-[10px] font-mono font-bold px-2.5 py-1 rounded-full bg-black text-white dark:bg-white dark:text-black">${esc(t?.name||'Modern').toUpperCase()}</span>
+          <span class="text-[10px] font-mono font-bold px-2.5 py-1 rounded-full bg-white dark:bg-black border border-neutral-300 dark:border-neutral-700">◎ ${ats}</span>
+        </div>
+        <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 dark:group-hover:bg-white/10 transition flex items-center justify-center opacity-0 group-hover:opacity-100"><span class="px-5 py-2.5 bg-black text-white dark:bg-white dark:text-black rounded-full text-sm font-bold">Open builder →</span></div>
+      </div>
+      <div class="p-5">
+        <div class="flex items-start justify-between gap-2">
+          <div class="min-w-0 cursor-pointer" onclick="openBuilder('${r.id}')"><h3 class="font-extrabold tracking-tight truncate hover:underline">${esc(r.name)}</h3><p class="text-xs opacity-60 mt-0.5">Edited ${timeAgo(r.updatedAt)} · ${esc(r.personal.fullName||'No name yet')}</p></div>
+          <div class="relative shrink-0">
+            <button onclick="toggleCardMenu('${r.id}')" class="w-8 h-8 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 font-bold">⋯</button>
+            <div id="menu-${r.id}" class="hidden absolute right-0 top-9 w-48 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-2xl p-1.5 z-30 text-sm">
+              <button onclick="openBuilder('${r.id}')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 font-semibold">✎ Edit</button>
+              <button onclick="askRename('${r.id}')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800">✏ Rename</button>
+              <button onclick="duplicateResume('${r.id}')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800">⧉ Duplicate</button>
+              <button onclick="downloadFromDash('${r.id}')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800">⤓ Download PDF</button>
+              <button onclick="deleteResume('${r.id}')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 text-red-600">🗑 Delete</button>
+            </div>
+          </div>
+        </div>
+        <div class="mt-3 flex items-center gap-2"><div class="flex-1 h-1.5 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden"><div class="h-full bg-black dark:bg-white rounded-full" style="width:${c}%"></div></div><span class="text-xs font-mono font-bold">${c}%</span></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function toggleCardMenu(id){ document.querySelectorAll('[id^="menu-"]').forEach(m=>{if(m.id!=='menu-'+id)m.classList.add('hidden')}); $('menu-'+id).classList.toggle('hidden'); }
+let renameId=null;
+function askRename(id){ const r=DB.resumes.find(x=>x.id===id); renameId=id; $('renameInput').value=r.name; openModal('modalRename'); }
+function confirmRename(){ const r=DB.resumes.find(x=>x.id===renameId); const v=$('renameInput').value.trim(); if(v){r.name=v;r.updatedAt=Date.now();persist();renderDashboard();toast('Renamed to "'+v+'" ✓');} closeModal('modalRename'); }
+function duplicateResume(id){ const src=DB.resumes.find(x=>x.id===id); if(!src||src.ownerId!==DB.session)return; const c=JSON.parse(JSON.stringify(src)); c.id=uid(); c.name=src.name+' (Copy)'; c.createdAt=c.updatedAt=Date.now(); DB.resumes.push(c); persist(); renderDashboard(); toast('Duplicated ✓ — POST /duplicate/'); }
+function deleteResume(id){ const r=DB.resumes.find(x=>x.id===id); if(!confirm('Delete "'+r.name+'"? This cannot be undone.'))return; DB.resumes=DB.resumes.filter(x=>x.id!==id); persist(); renderDashboard(); toast('Resume deleted','info'); }
+function downloadFromDash(id){ openBuilder(id); setTimeout(exportPDF,400); }
+
+/* ---------- New resume ---------- */
+let newTpl='modern';
+function openNewResume(){ newTpl='modern'; $('newResumeName').value=''; renderNewTplGrid(); openModal('modalNew'); setTimeout(()=>$('newResumeName').focus(),100); }
+function renderNewTplGrid(){
+  $('newTplGrid').innerHTML=TEMPLATES.map(t=>`
+    <button onclick="newTpl='${t.id}';renderNewTplGrid()" class="template-card ${newTpl===t.id?'active':''} border-2 border-neutral-200 dark:border-neutral-800 rounded-2xl p-3 text-left bg-white dark:bg-black">
+      <div class="bg-neutral-100 dark:bg-neutral-900 rounded-lg h-24 p-2.5 overflow-hidden">
+        <div class="bg-white rounded shadow-sm h-full p-2" style="font-size:6px;line-height:1.7;color:#111">
+          <div class="font-extrabold" style="font-size:8px">${t.id==='minimal'?'<div style="text-align:center">YOUR NAME</div>':'YOUR NAME'}</div>
+          <div style="height:2px;background:#111;margin:3px 0"></div>
+          <div style="background:#e5e5e5;height:3px;width:90%"></div><div style="background:#e5e5e5;height:3px;width:70%;margin-top:2px"></div>
+          <div style="background:#e5e5e5;height:3px;width:80%;margin-top:2px"></div>
+          ${t.id==='modern'?'<div style="display:flex;gap:2px;margin-top:3px"><div style="background:#111;height:10px;width:30%"></div><div style="background:#e5e5e5;height:10px;flex:1"></div></div>':''}
+        </div>
+      </div>
+      <div class="mt-2 font-bold text-xs">${t.name}</div><div class="text-[10px] opacity-60 line-clamp-2">${t.desc}</div>
+    </button>`).join('');
+}
+function createResume(){
+  const name=$('newResumeName').value.trim()||'Untitled Resume';
+  const withSample=$('newWithSample').checked;
+  const r=blankResume(DB.session,name,newTpl,withSample);
+  DB.resumes.push(r); persist(); closeModal('modalNew');
+  toast('Resume created ✓ — POST /api/resumes/');
+  openBuilder(r.id);
+}
+
+/* ---------- Templates gallery ---------- */
+function tplMiniHTML(t){
+  return `<div class="bg-neutral-100 dark:bg-neutral-900 rounded-xl h-40 p-3"><div class="bg-white text-black rounded shadow-md h-full p-3 overflow-hidden" style="font-size:7px;line-height:1.7">
+    ${t.id==='professional'?'<div style="background:#0A0A0A;color:#fff;padding:6px;border-radius:4px;font-weight:800;font-size:9px">YOUR NAME<br/><span style="font-weight:400;font-size:6px;opacity:.7">PROFESSIONAL TITLE</span></div>':`<div style="font-weight:800;font-size:10px;${t.id==='minimal'?'text-align:center':''}">YOUR NAME</div><div style="font-size:6px;letter-spacing:.2em;opacity:.5;${t.id==='minimal'?'text-align:center':''}">PROFESSIONAL TITLE</div>`}
+    <div style="height:2px;background:${t.id==='ats'?'#000':'#0A0A0A'};margin:4px 0"></div>
+    <div style="font-weight:700;letter-spacing:.15em;font-size:6px">EXPERIENCE</div>
+    <div style="background:#e5e5e5;height:4px;width:95%;margin-top:2px;border-radius:2px"></div><div style="background:#e5e5e5;height:4px;width:75%;margin-top:2px;border-radius:2px"></div>
+    <div style="font-weight:700;letter-spacing:.15em;font-size:6px;margin-top:4px">SKILLS</div>
+    <div style="display:flex;gap:2px;margin-top:2px"><span style="border:1px solid #999;border-radius:99px;padding:0 4px">React</span><span style="border:1px solid #999;border-radius:99px;padding:0 4px">Python</span><span style="background:#111;color:#fff;border-radius:99px;padding:0 4px">+6</span></div>
+  </div></div>`;
+}
+function openTemplatesGallery(){
+  const inBuilder = !$('view-builder').classList.contains('hidden');
+  $('galleryGrid').innerHTML=TEMPLATES.map(t=>`
+    <div class="border border-neutral-200 dark:border-neutral-800 rounded-2xl p-4 bg-white dark:bg-black">
+      <div class="flex items-center justify-between mb-3"><span class="font-extrabold">${t.name}</span><span class="text-[10px] font-mono px-2 py-1 rounded-full bg-neutral-100 dark:bg-neutral-900">${t.badge}</span></div>
+      ${tplMiniHTML(t)}
+      <p class="mt-3 text-xs opacity-60">${t.desc}</p>
+      ${inBuilder?`<button onclick="setTemplate('${t.id}');closeModal('modalTemplates')" class="mt-3 w-full py-2.5 bg-black text-white dark:bg-white dark:text-black rounded-full text-xs font-bold">Use ${t.name} →</button>`:`<button onclick="closeModal('modalTemplates');handleGetStarted()" class="mt-3 w-full py-2.5 border border-neutral-300 dark:border-neutral-700 rounded-full text-xs font-bold hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition">Start with ${t.name}</button>`}
+    </div>`).join('');
+  openModal('modalTemplates');
+  // landing minis
+}
+function renderLandingTemplates(){
+  $('landingTemplates').innerHTML=TEMPLATES.map(t=>`
+    <div class="border border-neutral-200 dark:border-neutral-800 rounded-2xl p-4 bg-white dark:bg-neutral-950 hover:shadow-xl hover:-translate-y-1 transition cursor-pointer" onclick="openTemplatesGallery()">
+      <div class="flex items-center justify-between mb-3"><span class="font-extrabold text-sm">${t.name}</span><span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-900">${t.badge}</span></div>
+      ${tplMiniHTML(t)}
+      <p class="mt-3 text-xs opacity-60">${t.desc}</p>
+    </div>`).join('');
+}
+
+/* ---------- Builder state ---------- */
+let currentId=null, zoom=70, openAcc='personal', saveTimer=null, mobileTab='edit';
+const cur = () => DB.resumes.find(r=>r.id===currentId);
+function openBuilder(id){
+  const r=DB.resumes.find(x=>x.id===id);
+  if(!r||r.ownerId!==DB.session){toast('Resume not found or access denied','error');return;}
+  currentId=id; openAcc='personal'; setMobileTab(window.innerWidth<1024?'preview':'edit');
+  if(window.innerWidth>=1024){['colEdit','colPreview','colDesign'].forEach(c=>$(c).style.display='');}
+  $('builderName').value=r.name;
+  renderEditor(); renderPreview(); renderDesign(); updateCompletion(); updateSaveStatus('saved');
+  showView('builder');
+  setTimeout(()=>{ fitZoom(); },100);
+}
+function setMobileTab(t){
+  mobileTab=t;
+  ['edit','preview','design'].forEach(x=>{
+    $('mtab-'+x).className='px-3 py-1.5 rounded-full '+((x===t)?'bg-white dark:bg-black shadow':'opacity-60');
+  });
+  if(window.innerWidth<1024){
+    $('colEdit').classList.toggle('mobile-active',t==='edit');
+    $('colPreview').classList.toggle('mobile-active',t==='preview');
+    $('colDesign').classList.toggle('mobile-active',t==='design');
+  }
+}
+function renameFromBuilder(v){ const r=cur(); if(!r)return; r.name=v||'Untitled Resume'; scheduleSave(); }
+function updateSaveStatus(state){
+  const el=$('saveStatus');
+  if(state==='saving') el.innerHTML='<span class="w-2 h-2 rounded-full bg-amber-500 pulse-dot"></span>Saving…';
+  else el.innerHTML='<span class="w-2 h-2 rounded-full bg-green-500"></span>Saved ✓';
+}
+function scheduleSave(){
+  updateSaveStatus('saving');
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>{ const r=cur(); if(r){r.updatedAt=Date.now();persist();} updateSaveStatus('saved'); updateCompletion(); },800);
+}
+function touch(){ const r=cur(); if(!r)return; renderPreview(); updateCompletion(); scheduleSave(); }
+function updateCompletion(){
+  const r=cur(); if(!r)return;
+  const c=completionOf(r);
+  $('completionLabel').textContent=c+'%';
+  $('completionBar').style.width=c+'%';
+  const ats=quickATS(r);
+  $('atsBadgeScore').textContent=ats+'/100';
+}
+
+/* ---------- Editor ---------- */
+function accShell(id,icon,title,subtitle,inner,extra=''){
+  const open=openAcc===id;
+  const hidden=cur()?.hidden.includes(id);
+  return `<div class="border ${open?'border-black dark:border-white':'border-neutral-200 dark:border-neutral-800'} rounded-2xl overflow-hidden bg-white dark:bg-neutral-950 transition ${open?'shadow-lg':''} ${open?'accordion-open':''}">
+    <div class="flex items-center gap-3 px-4 py-3.5 cursor-pointer select-none" onclick="toggleAcc('${id}')">
+      <div class="w-9 h-9 rounded-xl ${open?'bg-black text-white dark:bg-white dark:text-black':'bg-neutral-100 dark:bg-neutral-900'} flex items-center justify-center shrink-0">${icon}</div>
+      <div class="flex-1 min-w-0"><div class="font-bold text-sm flex items-center gap-2">${title} ${hidden?'<span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-neutral-200 dark:bg-neutral-800 opacity-70">HIDDEN</span>':''}</div><div class="text-[11px] opacity-50 truncate">${subtitle}</div></div>
+      ${extra}
+      <span class="acc-chevron opacity-50">▾</span>
+    </div>
+    <div class="accordion-body"><div class="px-4 pb-4 pt-1 border-t border-neutral-100 dark:border-neutral-900">${inner}</div></div>
+  </div>`;
+}
+function toggleAcc(id){ openAcc=openAcc===id?null:id; renderEditor(); }
+function eyeBtn(id){ const h=cur().hidden.includes(id); return `<button onclick="event.stopPropagation();toggleSection('${id}')" title="${h?'Show':'Hide'} section" class="w-8 h-8 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 text-sm opacity-60">${h?'◌':'◉'}</button>`; }
+function toggleSection(id){
+  const r=cur(); if(!r)return;
+  if(r.hidden.includes(id)) r.hidden=r.hidden.filter(x=>x!==id); else r.hidden.push(id);
+  touch(); renderEditor();
+}
+function field(label,path,value,ph='',type='text'){
+  return `<div><label class="text-[11px] font-bold uppercase tracking-wider opacity-50">${label}</label>
+  <input type="${type}" value="${esc(value)}" placeholder="${esc(ph)}" oninput="setPath('${path}',this.value)" class="field mt-1.5 w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3.5 py-2.5 text-sm bg-neutral-50 dark:bg-black focus:bg-white dark:focus:bg-neutral-950"/></div>`;
+}
+function setPath(path,val){
+  const r=cur(); if(!r)return;
+  const keys=path.split('.'); let o=r;
+  for(let i=0;i<keys.length-1;i++){ const k=keys[i]; o=o[isNaN(k)?k:+k]; }
+  const last=keys[keys.length-1];
+  o[isNaN(last)?last:+last]=val;
+  touch();
+}
+function renderEditor(){
+  const r=cur(); if(!r)return;
+  const p=r.personal;
+  const personalInner=`
+    <div class="flex items-center gap-4 py-3">
+      <div class="w-16 h-16 rounded-2xl overflow-hidden bg-neutral-100 dark:bg-neutral-900 flex items-center justify-center shrink-0 border border-neutral-200 dark:border-neutral-800">
+        ${p.photo?`<img src="${p.photo}" class="w-full h-full object-cover"/>`:'<span class="text-2xl opacity-40">◯</span>'}
+      </div>
+      <div class="flex gap-2">
+        <label class="px-4 py-2 rounded-full bg-black text-white dark:bg-white dark:text-black text-xs font-bold cursor-pointer hover:opacity-80">Upload photo<input type="file" accept="image/*" class="hidden" onchange="uploadPhoto(event)"/></label>
+        ${p.photo?'<button onclick="setPath(\'personal.photo\',\'\');renderEditor()" class="px-4 py-2 rounded-full border border-neutral-300 dark:border-neutral-700 text-xs font-bold">Remove</button>':''}
+      </div>
+    </div>
+    <p class="text-[11px] opacity-50 mb-3">⚠ Photos can hurt ATS parsing. Hide via Design → Show photo for ATS submissions.</p>
+    <div class="grid grid-cols-2 gap-3">
+      ${field('Full name','personal.fullName',p.fullName,'Amara Okafor')}
+      ${field('Professional title','personal.title',p.title,'Senior Frontend Developer')}
+      ${field('Email','personal.email',p.email,'you@email.com','email')}
+      ${field('Phone','personal.phone',p.phone,'+234 801 234 5678','tel')}
+      ${field('Location','personal.location',p.location,'Lagos, Nigeria')}
+      ${field('Website','personal.website',p.website,'yourname.dev')}
+      ${field('LinkedIn','personal.linkedin',p.linkedin,'linkedin.com/in/you')}
+      ${field('GitHub','personal.github',p.github,'github.com/you')}
+    </div>
+    <div class="mt-3">${field('Portfolio','personal.portfolio',p.portfolio,'behance.net/you or portfolio link')}</div>`;
+  const summaryInner=`
+    <textarea rows="5" placeholder="2–4 sentences: years, specialty, strengths, value…" oninput="setPath('summary',this.value)" class="field w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3.5 py-3 text-sm bg-neutral-50 dark:bg-black leading-relaxed">${esc(r.summary)}</textarea>
+    <div class="mt-2 flex items-center justify-between text-[11px] font-mono opacity-50"><span>${r.summary.length} chars · aim 200–400</span><span>${r.summary.split(/\s+/).filter(Boolean).length} words</span></div>
+    <div class="mt-2 grid grid-cols-3 gap-2">
+      <button onclick="aiImproveSummary('polish')" class="py-2.5 rounded-xl bg-black text-white dark:bg-white dark:text-black text-xs font-bold hover:opacity-80">✦ Improve</button>
+      <button onclick="aiImproveSummary('concise')" class="py-2.5 rounded-xl border border-neutral-300 dark:border-neutral-700 text-xs font-bold hover:bg-neutral-100 dark:hover:bg-neutral-900">− Concise</button>
+      <button onclick="aiImproveSummary('pro')" class="py-2.5 rounded-xl border border-neutral-300 dark:border-neutral-700 text-xs font-bold hover:bg-neutral-100 dark:hover:bg-neutral-900">◈ Pro tone</button>
+    </div>`;
+  const expInner=(r.experience.length?r.experience.map((e,i)=>`
+    <div class="border border-neutral-200 dark:border-neutral-800 rounded-2xl p-3.5 mb-3 bg-neutral-50/60 dark:bg-black/40">
+      <div class="flex items-center justify-between mb-2"><span class="text-xs font-mono font-bold opacity-50">ROLE ${i+1}</span>
+        <div class="flex gap-1"><button onclick="moveExp(${i},-1)" class="w-7 h-7 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-800 text-xs">↑</button><button onclick="moveExp(${i},1)" class="w-7 h-7 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-800 text-xs">↓</button><button onclick="removeExp(${i})" class="w-7 h-7 rounded-lg hover:bg-red-100 dark:hover:bg-red-950 text-red-600 text-xs">✕</button></div></div>
+      <div class="grid grid-cols-2 gap-2.5">
+        <div class="col-span-2"><label class="text-[11px] font-bold opacity-50">JOB TITLE</label><input value="${esc(e.jobTitle)}" oninput="setExp(${i},'jobTitle',this.value)" placeholder="Senior Frontend Engineer" class="field mt-1 w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-neutral-950 font-semibold"/></div>
+        <div><label class="text-[11px] font-bold opacity-50">COMPANY</label><input value="${esc(e.company)}" oninput="setExp(${i},'company',this.value)" placeholder="Paystack" class="field mt-1 w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-neutral-950"/></div>
+        <div><label class="text-[11px] font-bold opacity-50">LOCATION</label><input value="${esc(e.location)}" oninput="setExp(${i},'location',this.value)" placeholder="Lagos" class="field mt-1 w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-neutral-950"/></div>
+        <div><label class="text-[11px] font-bold opacity-50">START</label><input type="month" value="${esc(e.start)}" onchange="setExp(${i},'start',this.value)" class="field mt-1 w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-neutral-950"/></div>
+        <div><label class="text-[11px] font-bold opacity-50">END</label><input type="month" value="${esc(e.end)}" ${e.current?'disabled':''} onchange="setExp(${i},'end',this.value)" class="field mt-1 w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-neutral-950 ${e.current?'opacity-40':''}"/></div>
+      </div>
+      <label class="mt-2 flex items-center gap-2 text-xs font-bold cursor-pointer"><input type="checkbox" ${e.current?'checked':''} onchange="setExpCurrent(${i},this.checked)" class="w-4 h-4 accent-black dark:accent-white"/> Currently in this role</label>
+      <div class="mt-2"><label class="text-[11px] font-bold opacity-50">ROLE OVERVIEW (optional)</label><input value="${esc(e.description)}" oninput="setExp(${i},'description',this.value)" placeholder="One-line context…" class="field mt-1 w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-neutral-950"/></div>
+      <div class="mt-2.5"><label class="text-[11px] font-bold opacity-50">ACHIEVEMENT BULLETS · ${e.bullets.length}</label>
+        <div class="mt-1.5 space-y-2">${e.bullets.map((b,bi)=>`
+          <div class="flex gap-1.5 items-start group/b">
+            <span class="mt-2.5 text-[10px] opacity-40">●</span>
+            <textarea rows="2" oninput="setBullet(${i},${bi},this.value)" placeholder="Improved X by Y% through Z…" class="field flex-1 border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-[13px] bg-white dark:bg-neutral-950 leading-relaxed">${esc(b)}</textarea>
+            <div class="flex flex-col gap-1"><button onclick="aiBullet(${i},${bi})" title="AI improve" class="w-8 h-8 rounded-lg bg-black text-white dark:bg-white dark:text-black text-xs font-bold hover:opacity-80">✦</button><button onclick="removeBullet(${i},${bi})" class="w-8 h-8 rounded-lg hover:bg-red-100 dark:hover:bg-red-950 text-red-500 text-xs">✕</button></div>
+          </div>`).join('')}</div>
+        <button onclick="addBullet(${i})" class="mt-2 w-full py-2 border border-dashed border-neutral-300 dark:border-neutral-700 rounded-lg text-xs font-bold hover:bg-neutral-100 dark:hover:bg-neutral-900">+ Add bullet</button>
+      </div>
+    </div>`).join(''):'<div class="text-center py-6 opacity-50 text-sm">No roles yet.<br/>Add your most recent position first.</div>')
+    +`<button onclick="addExp()" class="w-full py-3 bg-black text-white dark:bg-white dark:text-black rounded-xl text-sm font-bold hover:opacity-80">+ Add experience</button>`;
+  const eduInner=(r.education.map((e,i)=>`
+    <div class="border border-neutral-200 dark:border-neutral-800 rounded-2xl p-3.5 mb-3 bg-neutral-50/60 dark:bg-black/40">
+      <div class="flex items-center justify-between mb-2"><span class="text-xs font-mono font-bold opacity-50">EDUCATION ${i+1}</span><button onclick="removeEdu(${i})" class="w-7 h-7 rounded-lg hover:bg-red-100 text-red-600 text-xs">✕</button></div>
+      <div class="grid grid-cols-2 gap-2.5">
+        <div class="col-span-2"><label class="text-[11px] font-bold opacity-50">INSTITUTION</label><input value="${esc(e.institution)}" oninput="setEdu(${i},'institution',this.value)" placeholder="University of Lagos" class="field mt-1 w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-neutral-950 font-semibold"/></div>
+        <div><label class="text-[11px] font-bold opacity-50">DEGREE</label><input value="${esc(e.degree)}" oninput="setEdu(${i},'degree',this.value)" placeholder="B.Sc." class="field mt-1 w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-neutral-950"/></div>
+        <div><label class="text-[11px] font-bold opacity-50">FIELD</label><input value="${esc(e.field)}" oninput="setEdu(${i},'field',this.value)" placeholder="Computer Science" class="field mt-1 w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-neutral-950"/></div>
+        <div><label class="text-[11px] font-bold opacity-50">START</label><input value="${esc(e.start)}" oninput="setEdu(${i},'start',this.value)" placeholder="2016" class="field mt-1 w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-neutral-950"/></div>
+        <div><label class="text-[11px] font-bold opacity-50">END</label><input value="${esc(e.end)}" oninput="setEdu(${i},'end',this.value)" placeholder="2020" class="field mt-1 w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-neutral-950"/></div>
+        <div class="col-span-2"><label class="text-[11px] font-bold opacity-50">GRADE / GPA</label><input value="${esc(e.gpa)}" oninput="setEdu(${i},'gpa',this.value)" placeholder="First Class · 4.2/5.0" class="field mt-1 w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-neutral-950"/></div>
+        <div class="col-span-2"><label class="text-[11px] font-bold opacity-50">DESCRIPTION</label><input value="${esc(e.description)}" oninput="setEdu(${i},'description',this.value)" placeholder="Honours, thesis, activities…" class="field mt-1 w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-neutral-950"/></div>
+      </div>
+    </div>`).join('')||'<div class="text-center py-4 opacity-50 text-sm">No education added.</div>')
+    +`<button onclick="addEdu()" class="w-full py-3 bg-black text-white dark:bg-white dark:text-black rounded-xl text-sm font-bold hover:opacity-80">+ Add education</button>`;
+  const skillGroup=(key,label,ph)=>`
+    <div class="mt-3"><label class="text-[11px] font-bold opacity-50 uppercase tracking-wider">${label} · ${r.skills[key].length}</label>
+      <div class="mt-1.5 flex flex-wrap gap-1.5">${r.skills[key].map((s,si)=>`<span class="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 rounded-full bg-black text-white dark:bg-white dark:text-black text-xs font-semibold">${esc(s)}<button onclick="removeSkill('${key}',${si})" class="tag-remove w-5 h-5 rounded-full flex items-center justify-center">✕</button></span>`).join('')}</div>
+      <div class="mt-2 flex gap-1.5"><input id="skill-${key}" placeholder="${ph} — press Enter" onkeydown="if(event.key==='Enter'){addSkill('${key}')}" class="field flex-1 border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-white dark:bg-neutral-950"/><button onclick="addSkill('${key}')" class="px-4 rounded-xl border border-neutral-300 dark:border-neutral-700 text-sm font-bold">+</button></div></div>`;
+  const skillsInner=`<div class="text-[11px] opacity-50">Group skills by type. Aim for 8–15 total. These power ATS keyword matching.</div>
+    ${skillGroup('technical','Technical / Programming','e.g. React, Python')}
+    ${skillGroup('tools','Tools & Platforms','e.g. Docker, Figma')}
+    ${skillGroup('soft','Soft skills','e.g. Leadership')}
+    ${skillGroup('languages','More languages / Other','e.g. SQL')}`;
+  const projInner=(r.projects.map((e,i)=>`
+    <div class="border border-neutral-200 dark:border-neutral-800 rounded-2xl p-3.5 mb-3 bg-neutral-50/60 dark:bg-black/40">
+      <div class="flex items-center justify-between mb-2"><span class="text-xs font-mono font-bold opacity-50">PROJECT ${i+1}</span><button onclick="removeProj(${i})" class="w-7 h-7 rounded-lg hover:bg-red-100 text-red-600 text-xs">✕</button></div>
+      <div class="space-y-2.5">
+        <div class="grid grid-cols-[1fr_90px] gap-2"><div><label class="text-[11px] font-bold opacity-50">NAME</label><input value="${esc(e.name)}" oninput="setProj(${i},'name',this.value)" placeholder="DevJobs Board" class="field mt-1 w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-neutral-950 font-semibold"/></div><div><label class="text-[11px] font-bold opacity-50">YEAR</label><input value="${esc(e.date)}" oninput="setProj(${i},'date',this.value)" placeholder="2024" class="field mt-1 w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-neutral-950"/></div></div>
+        <div><label class="text-[11px] font-bold opacity-50">DESCRIPTION</label><textarea rows="2" oninput="setProj(${i},'description',this.value)" class="field mt-1 w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-neutral-950">${esc(e.description)}</textarea></div>
+        <div><label class="text-[11px] font-bold opacity-50">TECHNOLOGIES (comma-separated)</label><input value="${esc((e.tech||[]).join(', '))}" oninput="setProjTech(${i},this.value)" placeholder="React, Tailwind, PostgreSQL" class="field mt-1 w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-neutral-950"/></div>
+        <div class="grid grid-cols-2 gap-2"><div><label class="text-[11px] font-bold opacity-50">LIVE URL</label><input value="${esc(e.url)}" oninput="setProj(${i},'url',this.value)" placeholder="demo.com" class="field mt-1 w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-neutral-950"/></div><div><label class="text-[11px] font-bold opacity-50">GITHUB</label><input value="${esc(e.github)}" oninput="setProj(${i},'github',this.value)" placeholder="github.com/…" class="field mt-1 w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-neutral-950"/></div></div>
+      </div>
+    </div>`).join('')||'<div class="text-center py-4 opacity-50 text-sm">No projects yet.</div>')
+    +`<button onclick="addProj()" class="w-full py-3 bg-black text-white dark:bg-white dark:text-black rounded-xl text-sm font-bold hover:opacity-80">+ Add project</button>`;
+  const certInner=(r.certifications.map((e,i)=>`
+    <div class="border border-neutral-200 dark:border-neutral-800 rounded-2xl p-3.5 mb-3 bg-neutral-50/60 dark:bg-black/40">
+      <div class="flex items-center justify-between mb-2"><span class="text-xs font-mono font-bold opacity-50">CERT ${i+1}</span><button onclick="removeCert(${i})" class="w-7 h-7 rounded-lg hover:bg-red-100 text-red-600 text-xs">✕</button></div>
+      <div class="grid grid-cols-2 gap-2.5">
+        <div class="col-span-2"><label class="text-[11px] font-bold opacity-50">NAME</label><input value="${esc(e.name)}" oninput="setCert(${i},'name',this.value)" placeholder="AWS Cloud Practitioner" class="field mt-1 w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-neutral-950 font-semibold"/></div>
+        <div><label class="text-[11px] font-bold opacity-50">ORGANIZATION</label><input value="${esc(e.org)}" oninput="setCert(${i},'org',this.value)" placeholder="Amazon Web Services" class="field mt-1 w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-neutral-950"/></div>
+        <div><label class="text-[11px] font-bold opacity-50">YEAR</label><input value="${esc(e.start)}" oninput="setCert(${i},'start',this.value)" placeholder="2023" class="field mt-1 w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-neutral-950"/></div>
+        <div><label class="text-[11px] font-bold opacity-50">CREDENTIAL ID</label><input value="${esc(e.credId)}" oninput="setCert(${i},'credId',this.value)" placeholder="ID-12345" class="field mt-1 w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-neutral-950"/></div>
+        <div><label class="text-[11px] font-bold opacity-50">VERIFY URL</label><input value="${esc(e.url)}" oninput="setCert(${i},'url',this.value)" placeholder="credly.com/…" class="field mt-1 w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-neutral-950"/></div>
+      </div>
+    </div>`).join('')||'<div class="text-center py-4 opacity-50 text-sm">No certifications.</div>')
+    +`<button onclick="addCert()" class="w-full py-3 bg-black text-white dark:bg-white dark:text-black rounded-xl text-sm font-bold hover:opacity-80">+ Add certification</button>`;
+  const extrasInner=`
+    <div class="space-y-4">
+      <div><div class="flex items-center justify-between"><label class="text-xs font-bold">Languages ${r.hidden.includes('languages')?'(hidden)':''}</label><button onclick="addLang()" class="text-xs font-bold px-3 py-1 rounded-full border border-neutral-300 dark:border-neutral-700">+ Add</button></div>
+        <div class="mt-2 space-y-2">${r.languages.map((l,i)=>`<div class="flex gap-2"><input value="${esc(l.lang)}" oninput="setLang(${i},'lang',this.value)" placeholder="English" class="field flex-1 border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-neutral-950"/><input value="${esc(l.level)}" oninput="setLang(${i},'level',this.value)" placeholder="Native" class="field w-28 border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-neutral-950"/><button onclick="removeLang(${i})" class="w-9 rounded-lg hover:bg-red-100 text-red-600">✕</button></div>`).join('')||'<div class="text-xs opacity-50">None added.</div>'}</div></div>
+      <div><div class="flex items-center justify-between"><label class="text-xs font-bold">Awards ${r.hidden.includes('awards')?'(hidden)':''}</label><button onclick="addAward()" class="text-xs font-bold px-3 py-1 rounded-full border border-neutral-300 dark:border-neutral-700">+ Add</button></div>
+        <div class="mt-2 space-y-2">${r.awards.map((a,i)=>`<div class="border border-neutral-200 dark:border-neutral-800 rounded-xl p-2.5 flex gap-2"><div class="flex-1 space-y-1.5"><input value="${esc(a.title)}" oninput="setAward(${i},'title',this.value)" placeholder="Award title" class="field w-full border border-neutral-200 rounded-lg px-2.5 py-1.5 text-sm bg-white dark:bg-neutral-950 font-semibold"/><input value="${esc(a.org)}" oninput="setAward(${i},'org',this.value)" placeholder="Organization · Year" class="field w-full border border-neutral-200 rounded-lg px-2.5 py-1.5 text-xs bg-white dark:bg-neutral-950"/></div><button onclick="removeAward(${i})" class="text-red-500 px-1">✕</button></div>`).join('')||'<div class="text-xs opacity-50">None added.</div>'}</div></div>
+      <div><div class="flex items-center justify-between"><label class="text-xs font-bold">Volunteering ${r.hidden.includes('volunteering')?'(hidden)':''}</label><button onclick="addVol()" class="text-xs font-bold px-3 py-1 rounded-full border border-neutral-300 dark:border-neutral-700">+ Add</button></div>
+        <div class="mt-2 space-y-2">${r.volunteering.map((v,i)=>`<div class="flex gap-2"><input value="${esc(v.role||v)}" oninput="setVol(${i},this.value)" placeholder="Role — Organization" class="field flex-1 border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-neutral-950"/><button onclick="removeVol(${i})" class="w-9 rounded-lg hover:bg-red-100 text-red-600">✕</button></div>`).join('')||'<div class="text-xs opacity-50">None added.</div>'}</div></div>
+      <div><label class="text-xs font-bold">Interests ${r.hidden.includes('interests')?'(hidden)':''}</label><input value="${esc(r.interests)}" oninput="setPath('interests',this.value)" placeholder="Open source, marathon running, photography" class="field mt-1.5 w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-neutral-950"/></div>
+      <div><label class="text-xs font-bold">References ${r.hidden.includes('references')?'(hidden)':''}</label><input value="${esc(r.references)}" oninput="setPath('references',this.value)" placeholder="Available upon request" class="field mt-1.5 w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-neutral-950"/></div>
+    </div>`;
+  $('editorAccordion').innerHTML =
+    accShell('personal','◉','Personal Information','Name, title, contact, links',personalInner) +
+    accShell('summary','≡','Professional Summary',(r.summary?r.summary.length+' chars':'Not written yet'),summaryInner,eyeBtn('summary')) +
+    accShell('experience','▦','Work Experience',r.experience.length?r.experience.length+' role(s)':'No roles added',expInner,eyeBtn('experience')) +
+    accShell('education','🎓','Education',r.education.length?r.education.length+' entries':'Not added',eduInner,eyeBtn('education')) +
+    accShell('skills','✦','Skills',Object.values(r.skills).flat().length+' skills total',skillsInner,eyeBtn('skills')) +
+    accShell('projects','⬔','Projects',r.projects.length?r.projects.length+' project(s)':'None yet',projInner,eyeBtn('projects')) +
+    accShell('certifications','◈','Certifications',r.certifications.length?r.certifications.length+' cert(s)':'None yet',certInner,eyeBtn('certifications')) +
+    accShell('extras','＋','More sections','Languages, awards, volunteering…',extrasInner);
+}
+/* editor mutations */
+function uploadPhoto(e){ const f=e.target.files[0]; if(!f)return; if(f.size>2e6){toast('Image too large (max 2MB)','warn');return;} const rd=new FileReader(); rd.onload=()=>{setPath('personal.photo',rd.result);renderEditor();}; rd.readAsDataURL(f); }
+function addExp(){ cur().experience.unshift({id:uid(),jobTitle:'',company:'',location:'',start:'',end:'',current:false,description:'',bullets:['']}); touch(); renderEditor(); }
+function removeExp(i){ cur().experience.splice(i,1); touch(); renderEditor(); }
+function setExp(i,k,v){ cur().experience[i][k]=v; touch(); }
+function setExpCurrent(i,v){ cur().experience[i].current=v; if(v)cur().experience[i].end=''; touch(); renderEditor(); }
+function moveExp(i,d){ const a=cur().experience, j=i+d; if(j<0||j>=a.length)return; [a[i],a[j]]=[a[j],a[i]]; touch(); renderEditor(); }
+function addBullet(i){ cur().experience[i].bullets.push(''); touch(); renderEditor(); }
+function removeBullet(i,bi){ cur().experience[i].bullets.splice(bi,1); touch(); renderEditor(); }
+function setBullet(i,bi,v){ cur().experience[i].bullets[bi]=v; touch(); }
+function addEdu(){ cur().education.push({id:uid(),institution:'',degree:'',field:'',start:'',end:'',gpa:'',description:''}); touch(); renderEditor(); }
+function removeEdu(i){ cur().education.splice(i,1); touch(); renderEditor(); }
+function setEdu(i,k,v){ cur().education[i][k]=v; touch(); }
+function addSkill(key){ const inp=$('skill-'+key); const v=(inp.value||'').trim(); if(!v)return; cur().skills[key].push(v); inp.value=''; touch(); renderEditor(); setTimeout(()=>$('skill-'+key)?.focus(),50); }
+function removeSkill(key,i){ cur().skills[key].splice(i,1); touch(); renderEditor(); }
+function addProj(){ cur().projects.push({id:uid(),name:'',description:'',tech:[],url:'',github:'',date:''}); touch(); renderEditor(); }
+function removeProj(i){ cur().projects.splice(i,1); touch(); renderEditor(); }
+function setProj(i,k,v){ cur().projects[i][k]=v; touch(); }
+function setProjTech(i,v){ cur().projects[i].tech=v.split(',').map(s=>s.trim()).filter(Boolean); touch(); }
+function addCert(){ cur().certifications.push({id:uid(),name:'',org:'',start:'',end:'',credId:'',url:''}); touch(); renderEditor(); }
+function removeCert(i){ cur().certifications.splice(i,1); touch(); renderEditor(); }
+function setCert(i,k,v){ cur().certifications[i][k]=v; touch(); }
+function addLang(){ cur().languages.push({lang:'',level:''}); touch(); renderEditor(); }
+function removeLang(i){ cur().languages.splice(i,1); touch(); renderEditor(); }
+function setLang(i,k,v){ cur().languages[i][k]=v; touch(); }
+function addAward(){ cur().awards.push({title:'',org:'',date:'',desc:''}); if(cur().hidden.includes('awards'))toggleSection('awards'); else {touch();renderEditor();} }
+function removeAward(i){ cur().awards.splice(i,1); touch(); renderEditor(); }
+function setAward(i,k,v){ cur().awards[i][k]=v; touch(); }
+function addVol(){ cur().volunteering.push({role:''}); if(cur().hidden.includes('volunteering'))toggleSection('volunteering'); else {touch();renderEditor();} }
+function removeVol(i){ cur().volunteering.splice(i,1); touch(); renderEditor(); }
+function setVol(i,v){ cur().volunteering[i]={role:v}; touch(); }
+
+/* ---------- Section order modal ---------- */
+function openSectionOrder(){
+  const r=cur();
+  $('orderList').innerHTML=r.sectionOrder.map((s,i)=>`
+    <div class="flex items-center gap-2 border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-black">
+      <span class="font-mono text-xs opacity-40 w-5">${i+1}</span>
+      <span class="flex-1 font-semibold">${SECTION_LABELS[s]||s}</span>
+      <button onclick="moveSection(${i},-1)" class="w-8 h-8 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800">↑</button>
+      <button onclick="moveSection(${i},1)" class="w-8 h-8 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800">↓</button>
+      <button onclick="toggleSection('${s}');openSectionOrder()" class="w-8 h-8 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 opacity-70">${r.hidden.includes(s)?'◌':'◉'}</button>
+    </div>`).join('');
+  openModal('modalOrder');
+}
+function moveSection(i,d){ const a=cur().sectionOrder,j=i+d; if(j<0||j>=a.length)return; [a[i],a[j]]=[a[j],a[i]]; touch(); openSectionOrder(); }
+
+/* ---------- Design panel ---------- */
+function renderDesign(){
+  const r=cur(); if(!r)return; const s=r.settings;
+  $('designTemplates').innerHTML=TEMPLATES.map(t=>`
+    <button onclick="setTemplate('${t.id}')" class="template-card ${r.template===t.id?'active':''} border-2 border-neutral-200 dark:border-neutral-800 rounded-xl p-2 text-left">
+      <div class="bg-neutral-100 dark:bg-neutral-900 rounded-lg h-16 overflow-hidden p-1.5"><div class="bg-white rounded h-full p-1.5" style="font-size:5px;color:#111;line-height:1.8"><div class="font-extrabold" style="font-size:7px">NAME</div><div style="height:2px;background:${s.accent};margin:2px 0"></div><div style="background:#e5e5e5;height:3px"></div><div style="background:#e5e5e5;height:3px;margin-top:2px;width:70%"></div></div></div>
+      <div class="mt-1.5 text-[11px] font-bold">${t.name}</div>
+    </button>`).join('');
+  $('tplName').textContent=TEMPLATES.find(t=>t.id===r.template)?.name;
+  $('swatches').innerHTML=ACCENTS.map(c=>`<button onclick="updateSetting('accent','${c}')" class="swatch ${s.accent===c?'active':''} w-9 h-9 rounded-full border border-black/10" style="background:${c}" title="${c}"></button>`).join('');
+  $('setFont').value=s.font; $('setFontSize').value=s.fontSize; $('setHeading').value=s.headingSize;
+  $('setLine').value=s.lineHeight; $('setSpacing').value=s.spacing; $('setMargins').value=s.margins;
+  $('customAccent').value=/^#[0-9a-f]{6}$/i.test(s.accent)?s.accent:'#111111';
+  $('setPhoto').checked=s.showPhoto; $('setPills').checked=s.pills;
+  $('vFontSize').textContent=s.fontSize+'pt'; $('vHeading').textContent=s.headingSize+'pt';
+  $('vLine').textContent=Number(s.lineHeight).toFixed(2); $('vSpacing').textContent=s.spacing+'px'; $('vMargins').textContent=s.margins+'px';
+}
+function setTemplate(id){ cur().template=id; touch(); renderDesign(); toast('Template → '+TEMPLATES.find(t=>t.id===id).name+' ✓'); }
+function updateSetting(k,v){ const r=cur(); if(['fontSize','headingSize','lineHeight','spacing','margins'].includes(k)) v=parseFloat(v); r.settings[k]=v; touch(); renderDesign(); }
+
+/* ---------- Preview rendering ---------- */
+function fmtYM(v){ if(!v)return''; if(/^\d{4}-\d{2}$/.test(v)){const[y,m]=v.split('-');return new Date(+y,+m-1).toLocaleDateString('en-US',{month:'short',year:'numeric'});} return v; }
+function dateRange(s,e,c){ const a=fmtYM(s),b=c?'Present':fmtYM(e); if(!a&&!b)return''; return (a||'')+(a&&(b)?' — ':'')+(b||''); }
+function linkify(v){ if(!v)return''; let h=v.trim().replace(/^https?:\/\//,''); return h; }
+
+function sectionBlocks(r,s){
+  const H=(t,style='')=>`<div style="${style}">${t}</div>`;
+  const blocks={};
+  if(r.summary) blocks.summary={title:'Professional Summary',html:`<p style="margin:0">${esc(r.summary)}</p>`};
+  if(r.experience.length) blocks.experience={title:'Work Experience',html:r.experience.map(e=>`
+    <div style="margin-bottom:${Math.max(8,s.spacing*0.55)}px;break-inside:avoid">
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline"><div style="font-weight:700">${esc(e.jobTitle||'Role')}${e.company?` <span style="font-weight:400;opacity:.7">· ${esc(e.company)}</span>`:''}</div><div style="font-size:.85em;opacity:.6;white-space:nowrap">${esc(dateRange(e.start,e.end,e.current))}</div></div>
+      ${e.location?`<div style="font-size:.85em;opacity:.6">${esc(e.location)}</div>`:''}
+      ${e.description?`<div style="opacity:.85;margin-top:2px">${esc(e.description)}</div>`:''}
+      ${e.bullets.filter(Boolean).length?`<ul style="margin:4px 0 0;padding-left:18px">${e.bullets.filter(Boolean).map(b=>`<li style="margin-top:2px">${esc(b)}</li>`).join('')}</ul>`:''}
+    </div>`).join('')};
+  if(r.education.length) blocks.education={title:'Education',html:r.education.map(e=>`
+    <div style="margin-bottom:8px;break-inside:avoid"><div style="display:flex;justify-content:space-between;gap:12px"><div><span style="font-weight:700">${esc(e.institution||'Institution')}</span>${e.degree||e.field?`<br/><span style="opacity:.85">${esc([e.degree,e.field].filter(Boolean).join(' · '))}</span>`:''}${e.gpa?` <span style="opacity:.6">— ${esc(e.gpa)}</span>`:''}${e.description?`<br/><span style="opacity:.7;font-size:.92em">${esc(e.description)}</span>`:''}</div><div style="font-size:.85em;opacity:.6;white-space:nowrap">${esc([e.start,e.end].filter(Boolean).join(' — '))}</div></div></div>`).join('')};
+  const allSkills=[...r.skills.technical,...r.skills.tools,...r.skills.soft,...r.skills.languages];
+  if(allSkills.length){
+    const pills = s.pills
+      ? `<div style="display:flex;flex-wrap:wrap;gap:6px">${allSkills.map(k=>`<span style="border:1px solid #d4d4d4;border-radius:99px;padding:1px 10px;font-size:.88em">${esc(k)}</span>`).join('')}</div>`
+      : ['Technical','Tools','Soft','Other'].map((lab,i)=>{const k=['technical','tools','soft','languages'][i];return r.skills[k].length?`<div style="margin-top:2px"><span style="font-weight:700">${lab}:</span> ${esc(r.skills[k].join(' · '))}</div>`:'';}).join('');
+    blocks.skills={title:'Skills',html:pills};
+  }
+  if(r.projects.length) blocks.projects={title:'Projects',html:r.projects.map(e=>`
+    <div style="margin-bottom:8px;break-inside:avoid"><div style="display:flex;justify-content:space-between;gap:12px"><div style="font-weight:700">${esc(e.name)}${e.tech?.length?` <span style="font-weight:400;opacity:.6;font-size:.88em">· ${esc(e.tech.join(', '))}</span>`:''}</div>${e.date?`<div style="font-size:.85em;opacity:.6">${esc(e.date)}</div>`:''}</div>
+    ${e.description?`<div style="opacity:.85">${esc(e.description)}</div>`:''}
+    ${(e.url||e.github)?`<div style="font-size:.88em;opacity:.7">${e.url?esc(linkify(e.url)):''}${e.url&&e.github?' · ':''}${e.github?esc(linkify(e.github)):''}</div>`:''}</div>`).join('')};
+  if(r.certifications.length) blocks.certifications={title:'Certifications',html:r.certifications.map(e=>`<div style="margin-bottom:4px;break-inside:avoid"><span style="font-weight:700">${esc(e.name)}</span>${e.org?` <span style="opacity:.7">— ${esc(e.org)}</span>`:''}${e.start?` <span style="opacity:.6">· ${esc(e.start)}</span>`:''}${e.credId?` <span style="opacity:.5;font-size:.88em">(${esc(e.credId)})</span>`:''}</div>`).join('')};
+  if(r.languages.length) blocks.languages={title:'Languages',html:`<div>${r.languages.map(l=>`<span style="font-weight:600">${esc(l.lang)}</span>${l.level?` <span style="opacity:.6">(${esc(l.level)})</span>`:''}`).join(' &nbsp;·&nbsp; ')}</div>`};
+  if(r.awards.length) blocks.awards={title:'Awards',html:r.awards.map(a=>`<div style="margin-bottom:4px"><span style="font-weight:700">${esc(a.title)}</span>${a.org?` <span style="opacity:.7">— ${esc(a.org)}</span>`:''}${a.date?` <span style="opacity:.6">· ${esc(a.date)}</span>`:''}${a.desc?`<br/><span style="opacity:.7">${esc(a.desc)}</span>`:''}</div>`).join('')};
+  if(r.volunteering.length) blocks.volunteering={title:'Volunteering',html:r.volunteering.map(v=>`<div>• ${esc(v.role||'')}</div>`).join('')};
+  if(r.interests) blocks.interests={title:'Interests',html:`<div style="opacity:.85">${esc(r.interests)}</div>`};
+  if(r.references) blocks.references={title:'References',html:`<div style="opacity:.85">${esc(r.references)}</div>`};
+  return blocks;
+}
+function orderedBlocks(r){
+  const all=sectionBlocks(r,r.settings);
+  return r.sectionOrder.filter(k=>all[k]&&!r.hidden.includes(k)).map(k=>({key:k,...all[k]}));
+}
+function contactLine(p){
+  return [p.email,p.phone,p.location,p.website?linkify(p.website):'',p.linkedin?linkify(p.linkedin):'',p.github?linkify(p.github):''].filter(Boolean);
+}
+function renderPreview(){
+  const r=cur(); if(!r)return;
+  const s=r.settings, p=r.personal;
+  const font=FONTS[s.font]||FONTS.Inter;
+  const base=`font-family:${font};font-size:${s.fontSize}pt;line-height:${s.lineHeight};color:#111;`;
+  const pad=s.margins, gap=s.spacing;
+  const blocks=orderedBlocks(r);
+  let html='';
+  const heading=(t,extra='')=>`<div style="font-weight:800;font-size:${Math.max(9,s.headingSize*0.62)}pt;letter-spacing:.16em;text-transform:uppercase;color:${s.accent};margin:0 0 8px;${extra}">${esc(t)}</div>`;
+  const divider=(c)=>`<div style="height:2px;background:${c};margin:6px 0 10px"></div>`;
+
+  if(r.template==='modern'){
+    const sbSkills=[...r.skills.technical,...r.skills.tools].slice(0,10);
+    html=`<div style="${base}display:flex;min-height:1123px">
+      <div style="width:250px;flex-shrink:0;background:#F4F4F5;padding:${pad}px 26px;border-right:3px solid ${s.accent}">
+        ${s.showPhoto&&p.photo?`<img src="${p.photo}" style="width:120px;height:120px;object-fit:cover;border-radius:16px;margin-bottom:16px"/>`:`<div style="width:64px;height:64px;border-radius:16px;background:${s.accent};color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;margin-bottom:16px">${esc((p.fullName||'Y')[0])}</div>`}
+        <div style="font-size:8pt;letter-spacing:.2em;font-weight:800;opacity:.5">CONTACT</div>
+        <div style="font-size:8.5pt;margin-top:6px;word-break:break-word">${contactLine(p).map(c=>`<div style="margin-top:3px">${esc(c)}</div>`).join('')}</div>
+        ${sbSkills.length?`<div style="font-size:8pt;letter-spacing:.2em;font-weight:800;opacity:.5;margin-top:18px">TOP SKILLS</div><div style="margin-top:6px">${sbSkills.map(k=>`<div style="margin-top:5px"><div style="font-size:8.5pt;font-weight:600">${esc(k)}</div><div style="height:4px;background:#E4E4E7;border-radius:99px;margin-top:3px"><div style="height:4px;width:${60+((k.length*7)%35)}%;background:${s.accent};border-radius:99px"></div></div></div>`).join('')}</div>`:''}
+        ${r.languages.length?`<div style="font-size:8pt;letter-spacing:.2em;font-weight:800;opacity:.5;margin-top:18px">LANGUAGES</div><div style="font-size:8.5pt;margin-top:6px">${r.languages.map(l=>`<div>${esc(l.lang)} <span style="opacity:.6">· ${esc(l.level)}</span></div>`).join('')}</div>`:''}
+      </div>
+      <div style="flex:1;padding:${pad}px ${pad}px">
+        <div style="font-size:${s.headingSize+10}pt;font-weight:800;letter-spacing:-.02em;line-height:1.05">${esc(p.fullName||'Your Name')}</div>
+        <div style="font-size:${s.headingSize*0.8}pt;font-weight:600;color:${s.accent};margin-top:2px">${esc(p.title||'Professional Title')}</div>
+        ${divider(s.accent)}
+        ${blocks.filter(b=>b.key!=='skills'&&b.key!=='languages').map(b=>`<div style="margin-bottom:${gap}px">${heading(b.title)}${b.html}</div>`).join('')}
+        ${!blocks.length?'<div style="opacity:.4">Start filling sections — your preview appears here instantly.</div>':''}
+      </div>
+    </div>`;
+  } else if(r.template==='minimal'){
+    html=`<div style="${base}padding:${pad+8}px ${pad+14}px;min-height:1123px">
+      <div style="text-align:center">
+        ${s.showPhoto&&p.photo?`<img src="${p.photo}" style="width:84px;height:84px;object-fit:cover;border-radius:99px;margin:0 auto 12px"/>`:''}
+        <div style="font-size:${s.headingSize+12}pt;font-weight:300;letter-spacing:.04em">${esc(p.fullName||'Your Name')}</div>
+        <div style="font-size:9pt;letter-spacing:.32em;text-transform:uppercase;opacity:.55;margin-top:4px">${esc(p.title||'Professional Title')}</div>
+        <div style="font-size:8.5pt;opacity:.6;margin-top:8px">${esc(contactLine(p).join('  ·  '))}</div>
+        <div style="width:56px;height:2px;background:${s.accent};margin:16px auto 0"></div>
+      </div>
+      <div style="margin-top:10px">${blocks.map(b=>`<div style="margin-top:${gap}px"><div style="text-align:center;font-size:8.5pt;letter-spacing:.3em;text-transform:uppercase;font-weight:700;color:${s.accent}">${esc(b.title)}</div><div style="margin-top:10px">${b.html}</div></div>`).join('')||'<div style="opacity:.4;text-align:center;margin-top:24px">Your story starts here.</div>'}</div>
+    </div>`;
+  } else if(r.template==='professional'){
+    html=`<div style="${base}min-height:1123px">
+      <div style="background:#0A0A0A;color:#fff;padding:${pad-6}px ${pad}px">
+        <div style="display:flex;gap:20px;align-items:center">
+          ${s.showPhoto&&p.photo?`<img src="${p.photo}" style="width:88px;height:88px;object-fit:cover;border-radius:12px;flex-shrink:0"/>`:''}
+          <div style="flex:1"><div style="font-size:${s.headingSize+9}pt;font-weight:800;letter-spacing:-.01em">${esc(p.fullName||'Your Name')}</div>
+          <div style="font-size:10pt;letter-spacing:.14em;text-transform:uppercase;opacity:.75;margin-top:2px">${esc(p.title||'Professional Title')}</div>
+          <div style="font-size:8.5pt;opacity:.65;margin-top:6px">${esc(contactLine(p).join('  |  '))}</div></div>
+        </div>
+      </div>
+      <div style="height:4px;background:${s.accent}"></div>
+      <div style="padding:${pad-8}px ${pad}px;display:grid;grid-template-columns:1.65fr 1fr;gap:28px">
+        <div>${blocks.filter(b=>['summary','experience','projects'].includes(b.key)).map(b=>`<div style="margin-bottom:${gap}px">${heading(b.title)}<div style="height:1px;background:#E4E4E7;margin:-4px 0 10px"></div>${b.html}</div>`).join('')}</div>
+        <div>${blocks.filter(b=>!['summary','experience','projects'].includes(b.key)).map(b=>`<div style="margin-bottom:${gap}px">${heading(b.title)}<div style="height:1px;background:#E4E4E7;margin:-4px 0 10px"></div>${b.html}</div>`).join('')}</div>
+      </div>
+      ${!blocks.length?'<div style="padding:24px;opacity:.4">Add content to see your professional layout.</div>':''}
+    </div>`;
+  } else { // ATS
+    html=`<div style="font-family:Georgia,'Times New Roman',serif;font-size:${s.fontSize}pt;line-height:${s.lineHeight};color:#000;padding:${pad}px;min-height:1123px;background:#fff">
+      <div style="font-size:${s.headingSize+8}pt;font-weight:700">${esc(p.fullName||'Your Name')}</div>
+      <div style="font-size:10pt;margin-top:2px">${esc(p.title||'Professional Title')}</div>
+      <div style="font-size:9pt;margin-top:4px">${esc(contactLine(p).join(' | '))}</div>
+      <div style="border-top:1.5px solid #000;margin:12px 0 0"></div>
+      ${blocks.map(b=>`<div style="margin-top:14px"><div style="font-size:10pt;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid #000;padding-bottom:3px;margin-bottom:8px">${esc(b.title)}</div>${b.html}</div>`).join('')||'<div style="opacity:.5;margin-top:16px">Plain, parser-safe content will render here.</div>'}
+    </div>`;
+  }
+  $('resumePreview').innerHTML=`<div class="resume-content">${html}</div>`;
+}
+/* zoom */
+function changeZoom(d){ zoom=Math.min(110,Math.max(35,zoom+d)); applyZoom(); }
+function applyZoom(){ $('previewScaler').style.transform=`scale(${zoom/100})`; $('zoomLabel').textContent=zoom+'%'; }
+function fitZoom(){ const w=$('colPreview').clientWidth; zoom=Math.max(35,Math.min(90,Math.floor((w-60)/794*100))); applyZoom(); }
+window.addEventListener('resize',()=>{ if(!$('view-builder').classList.contains('hidden')) fitZoom(); });
+
+/* ---------- AI engine (rule-based, never fabricates) ---------- */
+const WEAK_MAP=[
+  [/^worked on/i,'Developed'],[/^helped/i,'Collaborated to deliver'],[/^responsible for/i,'Led'],[/^made\b/i,'Built'],
+  [/^did\b/i,'Executed'],[/^was involved in/i,'Contributed to'],[/^handled/i,'Managed'],
+  [/^used (?=.{1,60}$)/i,'Leveraged '],[/\bhelped\b/gi,'supported'],[/\bworked with\b/gi,'partnered with'],
+  [/\bstuff\b/gi,'initiatives'],[/\bthings\b/gi,'deliverables'],[/\ba lot\b/gi,'significantly'],[/\bvery\b/gi,''],
+  [/website\.?$/i,'responsive web interfaces optimized for desktop and mobile users.'],
+  [/\bmanaged team\b/gi,'led cross-functional team']
+];
+const ACTION=['Developed','Designed','Engineered','Led','Delivered','Built','Launched','Optimized','Automated','Streamlined','Spearheaded','Implemented','Drove','Improved','Shipped'];
+function aiRewrite(text,mode='polish'){
+  if(!text||!text.trim()) return '';
+  let t=text.trim().replace(/\s+/g,' ');
+  WEAK_MAP.forEach(([re,rep])=>{ t=t.replace(re,rep); });
+  if(mode==='concise'){ t=t.replace(/in order to/gi,'to').replace(/due to the fact that/gi,'because').replace(/a large number of/gi,'many').replace(/at this point in time/gi,'now').replace(/, which.*?\./,'.'); const words=t.split(' '); if(words.length>22) t=words.slice(0,22).join(' ')+'.'; }
+  if(mode==='pro'){ if(!/^[A-Z]/.test(t)) t=t[0].toUpperCase()+t.slice(1);
+    if(!ACTION.some(a=>t.startsWith(a)) && /^(i |my |the )/i.test(t)) t=t.replace(/^(i |my |the )/i,'Delivered ');
+    t=t.replace(/gonna|wanna|kinda|stuff/gi,m=>({gonna:'going to',wanna:'want to',kinda:'somewhat',stuff:'initiatives'}[m.toLowerCase()]||m));
+  }
+  t=t.replace(/\bi\b/g,'I').replace(/\s{2,}/g,' ').trim();
+  if(!/[.!?]$/.test(t)) t+='.';
+  // never invent numbers: only suggest
+  return t;
+}
+function aiImproveSummary(mode){
+  const r=cur(); if(!r.summary?.trim()){toast('Write a draft summary first','warn');return;}
+  toast(API_ONLINE?'AI refining via backend…':'AI refining locally…','info');
+  (async()=>{
+    const remote=await aiViaBackend('/api/ai/improve-summary/',{text:r.summary,mode});
+    if(remote&&remote.improved){ r.summary=remote.improved; }
+    else { await new Promise(res=>setTimeout(res,700)); r.summary=aiRewrite(r.summary,mode); }
+    touch(); renderEditor();
+    toast('Summary improved ✓ ('+((remote&&remote.provider)||'rule-based')+') — review before export');
+  })();
+}
+function aiBullet(ei,bi){
+  const r=cur(); const b=r.experience[ei].bullets[bi];
+  if(!b?.trim()){toast('Write a draft bullet first','warn');return;}
+  toast('AI refining bullet…','info');
+  (async()=>{
+    const remote=await aiViaBackend('/api/ai/improve-bullet/',{text:b});
+    if(remote&&remote.improved){ r.experience[ei].bullets[bi]=remote.improved; }
+    else { await new Promise(res=>setTimeout(res,500)); r.experience[ei].bullets[bi]=aiRewrite(b,'pro'); }
+    touch(); renderEditor(); toast('Bullet improved ✓');
+  })();
+}
+function aiGenerateSummary(){
+  const r=cur();
+  const title=r.personal.title||'Professional';
+  const years=r.experience.length?r.experience.length+' roles':null;
+  const topSkills=[...r.skills.technical,...r.skills.tools].slice(0,3).join(', ');
+  const latest=r.experience[0]?`${r.experience[0].jobTitle||''}${r.experience[0].company?' at '+r.experience[0].company:''}`:'';
+  let draft=`${title}${years?' with experience across '+years:''}${latest?', most recently '+latest:''}.`;
+  if(topSkills) draft+=` Skilled in ${topSkills}.`;
+  draft+=' Focused on delivering measurable results and collaborating with cross-functional teams.';
+  if(r.experience.some(e=>e.bullets.some(b=>/\d/.test(b)))) draft+=' Track record of quantified impact detailed below.';
+  r.summary=aiRewrite(draft,'pro');
+  touch(); renderEditor(); if(!$('aiDrawer').classList.contains('hidden')) renderAI();
+  toast('Draft summary generated — edit to add your real numbers ✓');
+}
+/* AI drawer */
+let aiTab='summary';
+function openAI(){ renderAI(); $('aiDrawer').classList.remove('hidden'); }
+function closeAI(){ $('aiDrawer').classList.add('hidden'); }
+function setAiTab(t){ aiTab=t; renderAI(); }
+function findWeakBullets(){
+  const r=cur(); const out=[];
+  const weakWords=['helped','worked on','responsible for','stuff','things','various','assisted','did','made','handled'];
+  r.experience.forEach((e,ei)=>e.bullets.forEach((b,bi)=>{ if(!b) return; const w=weakWords.filter(w=>b.toLowerCase().includes(w)); const hasNum=/\d/.test(b); if(w.length||b.split(' ').length<6||!hasNum) out.push({ei,bi,b,w,hasNum}); }));
+  return out;
+}
+function missingContent(){
+  const r=cur(); const m=[];
+  if(!r.summary||r.summary.length<120) m.push({t:'Expand your summary',d:'Aim for 2–4 sentences covering years, specialty and value. Current: '+(r.summary?.length||0)+' chars.'});
+  if(!r.experience.some(e=>e.bullets.some(b=>/\d/.test(b)))) m.push({t:'Add measurable achievements',d:'No bullet contains a number. Add %, time saved, users served or revenue impact — only real figures.'});
+  if(Object.values(r.skills).flat().length<8) m.push({t:'Grow skills to 8–15',d:'ATS systems weight keyword coverage. Add tools and domain skills you genuinely hold.'});
+  if(!r.projects.length) m.push({t:'Add 1–2 projects',d:'Projects prove initiative, especially for career changers and graduates.'});
+  if(!r.personal.linkedin&&!r.personal.github&&!r.personal.portfolio) m.push({t:'Add a professional link',d:'LinkedIn, GitHub or portfolio increases recruiter trust.'});
+  if(!r.certifications.length) m.push({t:'Consider certifications',d:'Even one relevant cert differentiates you in crowded pipelines.'});
+  return m;
+}
+function renderAI(){
+  ['summary','bullets','audit'].forEach(t=>{ $('aiTab-'+t).className='flex-1 py-2 rounded-full '+((t===aiTab)?'bg-white dark:bg-black shadow':'opacity-60'); });
+  const r=cur(); let h='';
+  if(aiTab==='summary'){
+    h=`<label class="text-xs font-bold uppercase tracking-widest opacity-60">Current summary</label>
+    <div class="mt-2 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-4 text-sm leading-relaxed bg-neutral-50 dark:bg-neutral-900/50">${esc(r.summary||'No summary yet — generate a draft below, then refine.')}</div>
+    <div class="mt-3 grid grid-cols-3 gap-2">
+      <button onclick="aiImproveSummary('polish');setTimeout(renderAI,1100)" class="py-2.5 rounded-xl bg-black text-white dark:bg-white dark:text-black text-xs font-bold">✦ Polish</button>
+      <button onclick="aiImproveSummary('concise');setTimeout(renderAI,1100)" class="py-2.5 rounded-xl border border-neutral-300 dark:border-neutral-700 text-xs font-bold">− Concise</button>
+      <button onclick="aiImproveSummary('pro');setTimeout(renderAI,1100)" class="py-2.5 rounded-xl border border-neutral-300 dark:border-neutral-700 text-xs font-bold">◈ Pro</button>
+    </div>
+    <button onclick="aiGenerateSummary()" class="mt-2 w-full py-2.5 rounded-xl border border-dashed border-neutral-300 dark:border-neutral-700 text-xs font-bold hover:bg-neutral-100 dark:hover:bg-neutral-900">✎ Generate draft from my experience + skills</button>
+    <div class="mt-5 text-xs font-mono opacity-50">EXAMPLE TRANSFORMATION</div>
+    <div class="mt-2 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-4 text-sm"><div class="opacity-50 line-through">"Worked on a website."</div><div class="mt-2 font-semibold">→ "Developed responsive web interfaces optimized for desktop and mobile users."</div><div class="mt-2 text-[11px] opacity-60">No metrics invented. Add your own real numbers for impact.</div></div>`;
+  } else if(aiTab==='bullets'){
+    const weak=findWeakBullets();
+    h=`<div class="text-sm font-bold">Weak-description scan <span class="font-mono text-xs opacity-50">· ${weak.length} flagged</span></div>
+    <p class="text-xs opacity-60 mt-1">Flags vague verbs, short bullets and missing quantification. One click refines wording — you supply real numbers.</p>
+    <div class="mt-4 space-y-3">${weak.length?weak.slice(0,12).map(w=>`
+      <div class="border border-neutral-200 dark:border-neutral-800 rounded-2xl p-4">
+        <div class="text-[11px] font-mono opacity-50">${esc(r.experience[w.ei].jobTitle||'Role '+(w.ei+1))} · BULLET ${w.bi+1}</div>
+        <div class="mt-1.5 text-sm">"${esc(w.b)}"</div>
+        <div class="mt-2 flex flex-wrap gap-1.5 text-[11px] font-bold">${w.w.map(x=>`<span class="px-2 py-1 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300">"${esc(x)}" is vague</span>`).join('')}${!w.hasNum?'<span class="px-2 py-1 rounded-full bg-neutral-100 dark:bg-neutral-900 opacity-70">no metric</span>':''}</div>
+        <button onclick="aiBullet(${w.ei},${w.bi});setTimeout(renderAI,900)" class="mt-2.5 w-full py-2 rounded-xl bg-black text-white dark:bg-white dark:text-black text-xs font-bold">✦ Improve this bullet</button>
+      </div>`).join(''):'<div class="text-center py-10 opacity-60 text-sm">✓ No weak bullets detected.<br/>Strong action verbs + metrics found.</div>'}</div>`;
+  } else {
+    const m=missingContent();
+    h=`<div class="text-sm font-bold">Content audit <span class="font-mono text-xs opacity-50">· ${m.length} suggestions</span></div>
+    <div class="mt-4 space-y-3">${m.map(s=>`<div class="border border-neutral-200 dark:border-neutral-800 rounded-2xl p-4"><div class="font-bold text-sm">○ ${esc(s.t)}</div><div class="text-xs opacity-60 mt-1 leading-relaxed">${esc(s.d)}</div></div>`).join('')||'<div class="text-center py-10 opacity-60">✓ Resume looks complete.</div>'}</div>
+    <button onclick="openATS()" class="mt-4 w-full py-3 border border-neutral-300 dark:border-neutral-700 rounded-full text-sm font-bold">Run full ATS analysis →</button>`;
+  }
+  $('aiBody').innerHTML=h;
+}
+
+/* ---------- ATS Analyzer ---------- */
+function computeATS(r){
+  const checks=[];
+  const add=(label,pass,hint,pts)=>checks.push({label,pass,hint,pts:pass?pts:0,max:pts});
+  const p=r.personal, allText=JSON.stringify(r).toLowerCase();
+  add('Contact information complete',!!(p.email&&p.phone&&p.location),'Add email, phone and city/country.',10);
+  add('Professional summary present',!!(r.summary&&r.summary.length>60),'Write 200–400 characters summarizing value.',10);
+  add('Standard section headings',!r.hidden.includes('experience')&&!r.hidden.includes('education')&&!r.hidden.includes('skills'),'Keep Experience, Education, Skills visible with standard names.',10);
+  add('Experience with dates',r.experience.length>0&&r.experience.every(e=>e.start),'Every role needs a start date (and end or Present).',12);
+  add('Skills coverage (8+)',Object.values(r.skills).flat().length>=8,`Currently ${Object.values(r.skills).flat().length} skills. Aim 8–15.`,10);
+  add('Measurable achievements',r.experience.some(e=>e.bullets.some(b=>/\d/.test(b))),'Add real numbers: %, users, time, revenue.',12);
+  add('Strong action verbs',r.experience.some(e=>e.bullets.some(b=>/^(developed|designed|led|built|launched|improved|delivered|engineered|optimized|drove|shipped|implemented)/i.test(b))),'Start bullets with Developed, Led, Built, Improved…',8);
+  add('Keyword richness',new Set(allText.match(/[a-z]{4,}/g)||[]).size>120,'Mirror job-post terminology naturally throughout.',8);
+  add('No photo (ATS-safe)',!p.photo||!r.settings.showPhoto,'Photos can confuse parsers. Hide photo for ATS submissions.',5);
+  add('Single-column friendly',r.template==='ats'||r.template==='minimal','ATS template parses most reliably. Consider switching for strict systems.',5);
+  add('Links present',!!(p.linkedin||p.github||p.portfolio||p.website),'Add LinkedIn or portfolio for recruiter trust.',5);
+  add('Education section filled',r.education.length>0&&!!r.education[0].institution,'Include institution, degree and dates.',5);
+  const score=checks.reduce((s,c)=>s+c.pts,0);
+  return {score:Math.min(100,score),checks};
+}
+function runATS(animate){
+  const r=cur(); if(!r) return; const {score,checks}=computeATS(r);
+  $('atsBig').textContent=score;
+  $('atsVerdict').textContent=score>=85?'Excellent — highly parseable':score>=70?'Good — minor gaps':score>=50?'Fair — needs work':'Weak — major gaps';
+  $('atsVerdict').className='mt-2 font-bold text-sm '+(score>=70?'text-green-600':'text-amber-600');
+  const ring=$('atsRing'); const C=364.4;
+  ring.style.strokeDashoffset=C;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{ ring.style.strokeDashoffset=C-(C*score/100); }));
+  $('atsChecks').innerHTML=checks.map(c=>`
+    <div class="flex gap-3 items-start border ${c.pass?'border-green-200 dark:border-green-900':'border-neutral-200 dark:border-neutral-800'} rounded-2xl p-3.5 ${c.pass?'bg-green-50/60 dark:bg-green-950/20':''}">
+      <div class="w-7 h-7 rounded-full ${c.pass?'bg-green-500 text-white':'bg-neutral-200 dark:bg-neutral-800'} flex items-center justify-center text-xs font-bold shrink-0">${c.pass?'✓':'!'}</div>
+      <div class="flex-1 min-w-0"><div class="font-bold text-sm">${esc(c.label)} <span class="font-mono text-[11px] opacity-50">+${c.pts}/${c.max}</span></div>
+      ${c.pass?'':`<div class="text-xs opacity-60 mt-0.5">${esc(c.hint)}</div>`}</div>
+    </div>`).join('');
+  // One-click safe fixes (never invents content — only toggles formatting / visibility)
+  const fixes=[];
+  if(r.personal.photo && r.settings.showPhoto) fixes.push({a:'hide-photo',l:'◌ Hide photo for ATS'});
+  if(r.template!=='ats') fixes.push({a:'use-ats',l:'⇄ Switch to ATS template'});
+  if(r.hidden.includes('experience')||r.hidden.includes('education')||r.hidden.includes('skills')) fixes.push({a:'show-core',l:'◉ Unhide core sections'});
+  if(!r.settings.pills) fixes.push({a:'show-pills',l:'Show skills clearly'});
+  else if(score<70) fixes.push({a:'show-text-skills',l:'Use text skills for ATS'});
+  $('atsFixes').innerHTML=(fixes.length?'<span class="text-xs font-mono opacity-50 w-full">ONE-CLICK FIXES (safe, reversible):</span>':'<span class="text-xs opacity-60">✓ No quick formatting fixes needed.</span>')+fixes.map(f=>`<button onclick="applyATSFix('${f.a}')" class="px-4 py-2 rounded-full bg-black text-white dark:bg-white dark:text-black text-xs font-bold hover:opacity-80">${esc(f.l)}</button>`).join('');
+  $('atsBadgeScore').textContent=score+'/100';
+  if(animate) toast('ATS analysis complete — '+score+'/100','info');
+}
+function applyATSFix(a){
+  const r=cur(); if(!r) return;
+  if(a==='hide-photo'){ r.settings.showPhoto=false; }
+  if(a==='use-ats'){ r.template='ats'; }
+  if(a==='show-core'){ r.hidden=r.hidden.filter(x=>!['experience','education','skills'].includes(x)); }
+  if(a==='show-pills'){ r.settings.pills=true; }
+  if(a==='show-text-skills'){ r.settings.pills=false; }
+  touch(); renderEditor(); renderDesign(); runATS(false);
+  toast('Fix applied ✓ — re-scored','success');
+}
+function openATS(){ openModal('modalATS'); runATS(false); }
+
+/* ---------- JD Analyzer ---------- */
+const SKILL_LEXICON=['react','typescript','javascript','next.js','nextjs','node','node.js','python','django','flask','java','spring','go','golang','rust','sql','postgresql','mysql','mongodb','redis','aws','azure','gcp','docker','kubernetes','ci/cd','jenkins','git','figma','tailwind','html','css','sass','redux','graphql','rest','api','testing','jest','cypress','playwright','agile','scrum','jira','linux','terraform','machine learning','ml','data','excel','tableau','power bi','communication','leadership','mentoring','stakeholder','problem solving','collaboration','angular','vue','svelte','flutter','swift','kotlin','c++','c#','.net','php','laravel','ruby','rails','elasticsearch','kafka','rabbitmq','nginx','firebase','supabase','prisma','orm','seo','accessibility','a11y','responsive','performance','security','oauth','jwt','microservices','serverless','tdd','storybook','vite','webpack'];
+const STOP=new Set('and,the,for,with,you,are,our,will,have,has,from,that,this,who,can,all,as,at,be,by,in,is,it,of,on,or,to,we,your,a,an,including,include,plus,years,year,experience,work,working,team,role,join,looking,seeking,ability,strong,good,great,plus,etc,eg,ie,per,via,within,across,into,over,under,more,most,other,than,such,also,some,any,new,using,use,used,based,help,drive,ensure,looking'.split(','));
+function analyzeJD(){
+  const jd=$('jdInput').value.trim();
+  if(jd.length<80){toast('Paste a fuller job description (80+ chars)','warn');return;}
+  const r=cur();
+  const jdLow=' '+jd.toLowerCase()+' ';
+  const resumeText=JSON.stringify(r).toLowerCase();
+  const required=[...new Set(SKILL_LEXICON.filter(k=>jdLow.includes(k.toLowerCase())))];
+  const matched=required.filter(k=>resumeText.includes(k.toLowerCase()));
+  const missing=required.filter(k=>!resumeText.includes(k.toLowerCase()));
+  // keyword freq
+  const words=(jd.toLowerCase().match(/[a-z][a-z\-\+#.]{2,}/g)||[]).filter(w=>!STOP.has(w)&&w.length>2);
+  const freq={}; words.forEach(w=>freq[w]=(freq[w]||0)+1);
+  const topKw=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,14);
+  const score=required.length?Math.round(matched.length/required.length*100):0;
+  $('jdResults').innerHTML=`
+    <div class="flex items-center gap-4">
+      <div class="relative w-20 h-20 shrink-0"><svg width="80" height="80" viewBox="0 0 80 80"><circle cx="40" cy="40" r="33" fill="none" stroke-width="9" class="stroke-neutral-200 dark:stroke-neutral-800"/><circle cx="40" cy="40" r="33" fill="none" stroke="${score>=70?'#16a34a':score>=40?'#f59e0b':'#ef4444'}" stroke-width="9" stroke-linecap="round" transform="rotate(-90 40 40)" stroke-dasharray="207.3" stroke-dashoffset="${207.3-(207.3*score/100)}" style="transition:stroke-dashoffset 1s"/></svg><div class="absolute inset-0 flex items-center justify-center font-extrabold">${score}%</div></div>
+      <div><div class="font-extrabold">Match score</div><div class="text-xs opacity-60">${matched.length}/${required.length} required skills found in your resume.</div></div>
+    </div>
+    <div class="mt-4"><div class="text-xs font-bold uppercase tracking-widest opacity-60">✓ Matching (${matched.length})</div>
+      <div class="mt-2 flex flex-wrap gap-1.5">${matched.map(k=>`<span class="px-2.5 py-1 rounded-full bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-300 text-xs font-bold">${esc(k)}</span>`).join('')||'<span class="text-xs opacity-50">None yet.</span>'}</div></div>
+    <div class="mt-4"><div class="text-xs font-bold uppercase tracking-widest opacity-60">○ Missing (${missing.length})</div>
+      <div class="mt-2 flex flex-wrap gap-1.5">${missing.map(k=>`<button onclick="addMissingSkill('${esc(k).replace(/'/g,"\\'")}')" title="Add to skills (only if you genuinely hold it)" class="px-2.5 py-1 rounded-full bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-300 text-xs font-bold hover:ring-2 ring-red-400">+ ${esc(k)}</button>`).join('')||'<span class="text-xs opacity-50">None — great coverage.</span>'}</div><div class="mt-1 text-[11px] opacity-50">Click + to add a missing skill — only if you genuinely hold it. Never invent experience.</div></div>
+    <div class="mt-4"><div class="text-xs font-bold uppercase tracking-widest opacity-60">Top JD keywords</div>
+      <div class="mt-2 flex flex-wrap gap-1.5">${topKw.map(([w,f])=>`<span class="px-2.5 py-1 rounded-full border border-neutral-300 dark:border-neutral-700 text-xs font-mono">${esc(w)} ×${f}</span>`).join('')}</div></div>
+    <div class="mt-4 border border-neutral-200 dark:border-neutral-800 rounded-xl p-3.5 text-xs leading-relaxed opacity-80"><b>Recommendations:</b><br/>${missing.length?`• Weave missing skills you <i>genuinely</i> hold into experience bullets.<br/>• Mirror phrasing: if JD says "CI/CD", use "CI/CD" verbatim.<br/>• Quantify 2–3 bullets to echo JD impact language.`:'• Coverage is strong. Mirror top keywords verbatim and quantify impact.'}</div>
+    <button onclick="forkTailored()" class="mt-4 w-full py-3 bg-black text-white dark:bg-white dark:text-black rounded-full text-sm font-bold hover:opacity-80">⧉ Create tailored copy (keeps original) →</button>
+    <p class="mt-2 text-[11px] opacity-50 text-center">Forks this resume so you can tailor freely without touching the source.</p>`;
+  toast('JD analyzed — '+score+'% match','info');
+}
+function forkTailored(){
+  const src=cur(); const c=JSON.parse(JSON.stringify(src));
+  c.id=uid(); c.name=src.name.replace(/ \(Tailored.*\)$/,'')+' (Tailored)'; c.createdAt=c.updatedAt=Date.now();
+  DB.resumes.push(c); persist(); closeModal('modalJD');
+  toast('Tailored copy created ✓');
+  openBuilder(c.id);
+}
+function addMissingSkill(skill){
+  const r=cur(); if(!r||!skill) return;
+  const all=Object.values(r.skills).flat().map(s=>s.toLowerCase());
+  if(all.includes(skill.toLowerCase())){ toast('Skill already present','info'); return; }
+  if(!confirm(`Add "${skill}" to your Technical skills?\n\nOnly add skills you GENUINELY hold. Never invent experience.`)) return;
+  r.skills.technical.push(skill);
+  touch(); renderEditor(); analyzeJD();
+  toast(`"${skill}" added — re-scored ✓`);
+}
+function fillSampleJD(){ $('jdInput').value=`Senior Frontend Developer — Fintech\n\nWe are hiring a Senior Frontend Developer to build responsive, accessible web applications used by millions.\n\nRequirements:\n• 4+ years with React, TypeScript, JavaScript, HTML, CSS\n• Experience with Next.js, REST APIs, GraphQL\n• Strong testing culture: Jest, Cypress, CI/CD\n• Performance optimization and accessibility (a11y)\n• Git, Agile/Scrum, stakeholder communication\n• Nice to have: Node.js, Docker, AWS, Figma, Storybook\n\nYou will lead frontend initiatives, mentor engineers, and collaborate with designers to ship delightful checkout experiences.`; }
+function openJD(){ openModal('modalJD'); }
+
+/* ---------- Export ---------- */
+function buildPrintHTML(){
+  const r=cur();
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(r.name)}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Merriweather:wght@400;700&family=Lora:wght@400;600&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>@page{size:A4;margin:0}body{margin:0;padding:0;background:#fff}*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}</style></head>
+  <body>${$('resumePreview').innerHTML.replace('class="resume-content"','class=""')}</body></html>`;
+}
+function safeFileName(n){ return (n||'resume').replace(/[^\w\-]+/g,'-').replace(/\-+/g,'-').slice(0,60)||'resume'; }
+function exportPDF(direct=true){
+  $('exportMenu').classList.add('hidden');
+  const r=cur(); if(!r) return;
+  // Prefer true client-side A4 PDF via html2pdf.js (already loaded), fallback to print window
+  try{
+    if(direct && window.html2pdf){
+      toast('Generating A4 PDF…','info');
+      const src=$('resumePreview').firstElementChild || $('resumePreview');
+      const clone=src.cloneNode(true);
+      clone.style.transform='none';
+      const holder=document.createElement('div');
+      holder.style.cssText='position:fixed;left:-9999px;top:0;width:794px;background:#fff;';
+      holder.appendChild(clone); document.body.appendChild(holder);
+      const opt={margin:0,filename:safeFileName(r.name)+'.pdf',image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}};
+      html2pdf().set(opt).from(clone).save().then(()=>{holder.remove();toast('PDF downloaded ✓');}).catch(()=>{holder.remove();exportPDFPrint();});
+      return;
+    }
+  }catch(e){ /* fall through to print */ }
+  exportPDFPrint();
+}
+function exportPDFPrint(){
+  const r=cur();
+  const w=window.open('','_blank','width=900,height=1100');
+  if(!w){
+    $('print-root').innerHTML=`<div class="a4-paper" style="width:100%">${$('resumePreview').innerHTML}</div>`;
+    window.print(); return;
+  }
+  w.document.write(buildPrintHTML());
+  w.document.close();
+  w.onload=()=>{ setTimeout(()=>{ w.focus(); w.print(); },600); };
+  toast('PDF dialog opened — choose "Save as PDF" ✓');
+}
+function buildPlainText(){
+  const r=cur(),p=r.personal;
+  let t=`${p.fullName||''}\n${p.title||''}\n${contactLine(p).join(' | ')}\n`;
+  orderedBlocks(r).forEach(b=>{ const tmp=document.createElement('div'); tmp.innerHTML=b.html; t+=`\n${b.title.toUpperCase()}\n`+tmp.innerText.trim()+'\n'; });
+  return t.trim()+'\n';
+}
+function printResume(){ $('exportMenu').classList.add('hidden'); $('print-root').innerHTML=`<div class="a4-paper" style="width:100%">${$('resumePreview').innerHTML}</div>`; window.print(); }
+function exportTXT(){
+  const r=cur();
+  const blob=new Blob([buildPlainText()],{type:'text/plain'}); const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download=safeFileName(r.name)+'.txt'; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+  toast('Plain-text exported — great for ATS checks ✓');
+}
+async function copyPlainText(){
+  $('exportMenu').classList.add('hidden');
+  try{ await navigator.clipboard.writeText(buildPlainText()); toast('Resume text copied — paste into any job portal ✓'); }
+  catch(e){ toast('Copy blocked by browser — use Export .txt instead','warn'); }
+}
+async function copyShareLink(){
+  $('exportMenu').classList.add('hidden');
+  const r=cur(); if(!r) return;
+  try{
+    // Encode resume into URL hash so link opens same resume on any device (no backend yet)
+    const json=JSON.stringify(r);
+    const b64=btoa(unescape(encodeURIComponent(json)));
+    const url=location.origin+location.pathname+'#r='+b64.slice(0,8000);
+    await navigator.clipboard.writeText(url);
+    toast(b64.length>8000?'Link copied (large resume truncated to URL limit)':'Share link copied ✓ — anyone opening it can import');
+  }catch(e){ toast('Could not build share link — resume too large','error'); }
+}
+function tryImportFromHash(){
+  if(!location.hash.startsWith('#r=')) return false;
+  try{
+    const data=decodeURIComponent(escape(atob(location.hash.slice(3))));
+    const r=JSON.parse(data);
+    if(!r||!r.personal) return false;
+    return r;
+  }catch(e){ return false; }
+}
+function duplicateCurrent(){ const r=cur(); duplicateResume(r.id); $('exportMenu').classList.add('hidden'); }
+async function exportServer(fmt='html'){
+  $('exportMenu').classList.add('hidden');
+  const r=cur(); if(!r) return;
+  if(!API_ONLINE||!API_TOKEN){ toast('Backend offline — using local export instead','warn'); fmt==='txt'?exportTXT():exportPDF(true); return; }
+  try{
+    toast('Requesting server export…','info');
+    const res=await fetch(`${API_BASE}/api/resumes/${r.id}/export/?format=${fmt}`,{headers:{Authorization:'Bearer '+API_TOKEN}});
+    if(!res.ok) throw new Error(await res.text());
+    const blob=await res.blob();
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+    a.download=safeFileName(r.name)+(fmt==='txt'?'.txt':'.html'); a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+    toast('Server export downloaded ✓');
+  }catch(e){ toast('Server export failed — using local export','warn'); fmt==='txt'?exportTXT():exportPDF(true); }
+}
+
+/* ---------- Modals ---------- */
+function openModal(id){ $(id).classList.remove('hidden'); }
+function closeModal(id){ $(id).classList.add('hidden'); }
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='p'&&!$('view-builder').classList.contains('hidden')){e.preventDefault();printResume();}
+  if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();if(cur()){cur().updatedAt=Date.now();persist();updateSaveStatus('saved');toast('Saved ✓ (Ctrl+S)');}}
+  if(e.key==='Escape'){['modalNew','modalTemplates','modalOrder','modalATS','modalJD','modalProfile','modalRename'].forEach(closeModal);closeAI();}
+});
+
+/* ---------- Init ---------- */
+renderLandingTemplates();
+updateNav();
+updateApiBadge();
+checkBackend(true).then(ok=>{ if(ok&&API_TOKEN) pullFromBackend().then(()=>{ if(DB.session&&currentUser()&&!$('view-dashboard').classList.contains('hidden')) renderDashboard(); }); });
+// Shared-link import (#r=base64 resume): works even without login
+(function(){
+  const shared=tryImportFromHash();
+  if(shared){
+    history.replaceState(null,'',location.pathname);
+    const go=()=>{
+      if(!DB.session){ showView('auth'); setAuthMode('register'); toast('Sign up / log in to save this shared resume, or preview below','info'); }
+      // stash for post-login import
+      try{ sessionStorage.setItem('mono_shared_import', JSON.stringify(shared)); }catch(e){}
+      // temporary preview: inject as read-only builder state if logged in, else landing preview
+      if(DB.session){
+        shared.id=uid(); shared.ownerId=DB.session; shared.name=(shared.name||'Shared Resume')+' (Shared)'; shared.createdAt=shared.updatedAt=Date.now();
+        DB.resumes.push(shared); persist();
+        openBuilder(shared.id);
+        toast('Shared resume imported ✓');
+      }
+    };
+    setTimeout(go,300);
+  }
+})();
+const _origSubmitAuth=submitAuth;
+submitAuth=function(){
+  const before=DB.resumes.length;
+  _origSubmitAuth();
+  try{
+    const raw=sessionStorage.getItem('mono_shared_import');
+    if(raw && DB.session){
+      const r=JSON.parse(raw); sessionStorage.removeItem('mono_shared_import');
+      r.id=uid(); r.ownerId=DB.session; r.createdAt=r.updatedAt=Date.now();
+      DB.resumes.push(r); persist(); openBuilder(r.id);
+    }
+  }catch(e){}
+};
+if(DB.session&&currentUser()){ if(!location.hash.startsWith('#r=')) showView('dashboard'); } else if(!location.hash.startsWith('#r=')) { showView('landing'); }
+setAuthMode('login');
+// demo hint for first-time visitors
+if(!localStorage.getItem('mono_seen')){
+  localStorage.setItem('mono_seen','1');
+  setTimeout(()=>{ if(!DB.session) toast('Welcome to MONO — try the demo account or sign up free','info'); },1200);
+}
+</script>
+</body>
+</html>

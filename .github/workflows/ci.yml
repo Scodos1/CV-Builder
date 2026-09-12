@@ -1,0 +1,51 @@
+name: ci
+on:
+  push:
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: sqlite:////tmp/ci-mono.db
+      MONO_JWT_SECRET: ci-test-secret-32-chars-minimum-ok
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r backend/requirements.txt httpx
+      - run: python -m py_compile backend/main.py backend/db.py backend/backup.py backend/migrate_json_to_sql.py
+      - run: |
+          python - <<'EOF'
+          import sys; sys.path.insert(0, 'backend')
+          import os
+          from db import init_db; init_db()
+          from main import app
+          from fastapi.testclient import TestClient
+          c = TestClient(app)
+          r = c.post('/api/auth/register/', json={'name': 'CI', 'email': 'ci@test.co', 'password': 'password123'})
+          assert r.status_code == 200, r.text
+          h = {'Authorization': 'Bearer ' + r.json()['token']}
+          r2 = c.post('/api/resumes/', json={'name': 'CV'}, headers=h)
+          assert r2.status_code == 200, r2.text
+          assert c.get('/api/health').json()['ok'] is True
+          print('smoke OK')
+          EOF
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: |
+          python3 - <<'EOF'
+          import re
+          from pathlib import Path
+          t = Path('index.html').read_text(encoding='utf-8')
+          m = re.findall(r'<script>(.*?)</script>', t, re.S)
+          Path('/tmp/check.js').write_text(m[-1], encoding='utf-8')
+          EOF
+      - run: node --check /tmp/check.js

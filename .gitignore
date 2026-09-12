@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+backend/mono.db
+backend/db.json
+backend/backups/
+backend/.env
+C:/Users/HomePC/AppData/Local/Temp/opencode/

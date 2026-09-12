@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+mono.db
+db.json
+backups/
+.env
+node_modules/
