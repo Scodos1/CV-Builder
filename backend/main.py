@@ -297,22 +297,59 @@ GROQ_KEY = os.getenv("GROQ_API_KEY", "")
 OPENAI_KEY = os.getenv("OPENAI_API_KEY", "")
 AI_PROVIDER = "groq" if GROQ_KEY else ("openai" if OPENAI_KEY else "rule-based")
 AI_MODEL = os.getenv("MONO_AI_MODEL", "llama-3.1-8b-instant")  # Groq free model
-SYSTEM_GUARD = ("You refine resume wording only. Never invent employers, dates, metrics, "
-                "qualifications or skills. Keep facts identical; improve clarity, verbs and conciseness.")
+SYSTEM_GUARD = ("You are a resume writing expert. REWRITE the text to be stronger and more professional. "
+                "Never invent employers, dates, metrics, qualifications or skills not mentioned. "
+                "Keep all facts identical but IMPROVE the wording significantly: use strong action verbs, "
+                "make it concise, and ensure it sounds professional. Always produce a meaningfully different version.")
 SYSTEM_BUILDER = ("You are an expert resume writer. Generate realistic, tailored resume content "
                   "for the given role and level. Use professional language. Never invent specific "
                   "company names unless provided. Use bullet points that start with strong verbs.")
 
 def _rule_polish(t: str, mode: str = "polish") -> str:
     t = " ".join((t or "").split())
-    repl = [("worked on", "Developed"), ("helped", "Supported"), ("responsible for", "Led"),
-            ("made", "Built"), ("did", "Executed"), ("handled", "Managed")]
-    for a, b in repl:
-        t = re.sub(a, b, t, flags=re.I)
+    if not t: return t
+    # Strong verb replacements (case-insensitive, whole phrase)
+    repl = [
+        (r"\bworked on\b", "Developed"), (r"\bhelped\b", "Collaborated to deliver"),
+        (r"\bresponsible for\b", "Led"), (r"\bmade\b", "Built"),
+        (r"\bdid\b", "Executed"), (r"\bhandled\b", "Managed"),
+        (r"\bwas involved in\b", "Contributed to"), (r"\bused\b", "Leveraged"),
+        (r"\bmanaged\b", "Directed"), (r"\bcreated\b", "Designed and built"),
+        (r"\bwas in charge of\b", "Spearheaded"), (r"\bworked with\b", "Partnered with"),
+        (r"\bassisted\b", "Supported"), (r"\bparticipated in\b", "Contributed to"),
+        (r"\bwas responsible for\b", "Led"), (r"\bdid work on\b", "Developed"),
+    ]
+    for pat, rep in repl:
+        t = re.sub(pat, rep, t, flags=re.I)
+    # Remove filler words
+    t = re.sub(r"\bvery\b", "", t, flags=re.I)
+    t = re.sub(r"\bjust\b", "", t, flags=re.I)
+    t = re.sub(r"\breally\b", "", t, flags=re.I)
+    t = re.sub(r"\bstuff\b", "initiatives", t, flags=re.I)
+    t = re.sub(r"\bthings\b", "deliverables", t, flags=re.I)
+    t = re.sub(r"\ba lot of\b", "significant", t, flags=re.I)
+    t = re.sub(r"\bvarious\b", "multiple", t, flags=re.I)
+    t = re.sub(r"\butilized\b", "Leveraged", t, flags=re.I)
+    # Concise mode
     if mode == "concise":
-        t = re.sub(r"in order to", "to", t, flags=re.I)
+        t = re.sub(r"\bin order to\b", "to", t, flags=re.I)
+        t = re.sub(r"\bdue to the fact that\b", "because", t, flags=re.I)
+        t = re.sub(r"\bat this point in time\b", "currently", t, flags=re.I)
         w = t.split()
         if len(w) > 22: t = " ".join(w[:22]) + "."
+    # Pro mode: ensure starts with action verb
+    if mode == "pro":
+        ACTION = ["Developed", "Designed", "Engineered", "Led", "Delivered", "Built",
+                  "Launched", "Optimized", "Automated", "Streamlined", "Implemented", "Drove", "Improved", "Shipped"]
+        if not any(t.startswith(a) for a in ACTION):
+            # Try to prepend a strong verb
+            for weak in ["I ", "my ", "the ", "a "]:
+                if t.lower().startswith(weak.lower()):
+                    t = "Delivered " + t[len(weak):]
+                    break
+    # Clean up
+    t = re.sub(r"\bi\b", "I", t)
+    t = re.sub(r"\s{2,}", " ", t).strip()
     if t and not t[0].isupper(): t = t[0].upper() + t[1:]
     if t and t[-1] not in ".!?": t += "."
     return t

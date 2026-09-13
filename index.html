@@ -1848,6 +1848,9 @@ function aiRewrite(text,mode='polish'){
   if(!text||!text.trim()) return '';
   let t=text.trim().replace(/\s+/g,' ');
   WEAK_MAP.forEach(([re,rep])=>{ t=t.replace(re,rep); });
+  // Additional weak verb replacements
+  const more=[[/\bwas involved in\b/gi,'Contributed to'],[/\bmanaged\b/gi,'Directed'],[/\bcreated\b/gi,'Designed and built'],[/\bassisted\b/gi,'Supported'],[/\bparticipated in\b/gi,'Contributed to'],[/\butilized\b/gi,'Leveraged'],[/\bstuff\b/gi,'initiatives'],[/\bthings\b/gi,'deliverables'],[/\ba lot of\b/gi,'significant'],[/\bvarious\b/gi,'multiple'],[/\bvery\b/gi,''],[/\bjust\b/gi,''],[/\breally\b/gi,'']];
+  more.forEach(([re,rep])=>{ t=t.replace(re,rep); });
   if(mode==='concise'){ t=t.replace(/in order to/gi,'to').replace(/due to the fact that/gi,'because').replace(/a large number of/gi,'many').replace(/at this point in time/gi,'now').replace(/, which.*?\./,'.'); const words=t.split(' '); if(words.length>22) t=words.slice(0,22).join(' ')+'.'; }
   if(mode==='pro'){ if(!/^[A-Z]/.test(t)) t=t[0].toUpperCase()+t.slice(1);
     if(!ACTION.some(a=>t.startsWith(a)) && /^(i |my |the )/i.test(t)) t=t.replace(/^(i |my |the )/i,'Delivered ');
@@ -1855,7 +1858,6 @@ function aiRewrite(text,mode='polish'){
   }
   t=t.replace(/\bi\b/g,'I').replace(/\s{2,}/g,' ').trim();
   if(!/[.!?]$/.test(t)) t+='.';
-  // never invent numbers: only suggest
   return t;
 }
 function aiImproveSummary(mode){
@@ -1875,9 +1877,10 @@ function aiBullet(ei,bi){
   toast('AI refining bullet…','info');
   (async()=>{
     const remote=await aiViaBackend('/api/ai/improve-bullet/',{text:b});
-    if(remote&&remote.improved){ r.experience[ei].bullets[bi]=remote.improved; }
-    else { await new Promise(res=>setTimeout(res,500)); r.experience[ei].bullets[bi]=aiRewrite(b,'pro'); }
-    touch(); renderEditor(); toast('Bullet improved ✓');
+    if(remote&&remote.improved&&remote.improved!==b){ r.experience[ei].bullets[bi]=remote.improved; }
+    else { await new Promise(res=>setTimeout(res,500)); const rewritten=aiRewrite(b,'pro'); if(rewritten!==b) r.experience[ei].bullets[bi]=rewritten; }
+    touch(); renderEditor(); if(!$('aiDrawer').classList.contains('hidden')) renderAI();
+    toast('Bullet improved ✓');
   })();
 }
 function aiGenerateSummary(){
@@ -1938,7 +1941,7 @@ function renderAI(){
         <div class="text-[11px] font-mono opacity-50">${esc(r.experience[w.ei].jobTitle||'Role '+(w.ei+1))} · BULLET ${w.bi+1}</div>
         <div class="mt-1.5 text-sm">"${esc(w.b)}"</div>
         <div class="mt-2 flex flex-wrap gap-1.5 text-[11px] font-bold">${w.w.map(x=>`<span class="px-2 py-1 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300">"${esc(x)}" is vague</span>`).join('')}${!w.hasNum?'<span class="px-2 py-1 rounded-full bg-neutral-100 dark:bg-neutral-900 opacity-70">no metric</span>':''}</div>
-        <button onclick="aiBullet(${w.ei},${w.bi});setTimeout(renderAI,900)" class="mt-2.5 w-full py-2 rounded-xl bg-black text-white dark:bg-white dark:text-black text-xs font-bold">✦ Improve this bullet</button>
+        <button onclick="aiBullet(${w.ei},${w.bi})" class="mt-2.5 w-full py-2 rounded-xl bg-black text-white dark:bg-white dark:text-black text-xs font-bold">✦ Improve this bullet</button>
       </div>`).join(''):'<div class="text-center py-10 opacity-60 text-sm">✓ No weak bullets detected.<br/>Strong action verbs + metrics found.</div>'}</div>`;
   } else {
     const m=missingContent();
