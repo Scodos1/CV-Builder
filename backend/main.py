@@ -546,6 +546,134 @@ def build_resume(p: dict, req: Request):
     return {"resume": result, "provider": provider}
 
 
+SYSTEM_PARSER = ("You are a resume parser. Extract structured data from the raw resume text below. "
+                 "Return ONLY valid JSON with these keys: "
+                 "personal (object with fullName, title, email, phone, location, linkedin, github, website), "
+                 "summary (string), "
+                 "experience (array of objects with jobTitle, company, location, start, end, current (bool), bullets (array of strings)), "
+                 "education (array with institution, degree, field, start, end), "
+                 "skills (object with technical, tools, soft arrays), "
+                 "projects (array with name, description, tech, url), "
+                 "certifications (array with name, org, start), "
+                 "languages (array with lang, level). "
+                 "Extract what you can. Leave fields empty/null if not found. Do NOT invent information.")
+
+@app.post("/api/ai/parse-resume/")
+def parse_resume(p: dict, req: Request):
+    rl_ai(req)
+    text = str((p or {}).get("text") or "")[:15000]
+    if not text.strip():
+        raise HTTPException(400, "Empty text")
+
+    # Try LLM first
+    prompt = f"Parse this resume text into structured JSON:\n\n{text[:8000]}"
+    llm_out = _llm(prompt, system=SYSTEM_PARSER, max_tokens=1500)
+
+    if llm_out:
+        try:
+            import json as _json
+            match = re.search(r'\{[\s\S]*\}', llm_out)
+            if match:
+                data = _json.loads(match.group())
+                # Normalize experience
+                for e in data.get("experience", []):
+                    e.setdefault("id", "")
+                    e.setdefault("location", "")
+                    e.setdefault("current", False)
+                    e.setdefault("bullets", [])
+                return {"resume": data, "provider": AI_PROVIDER}
+        except Exception:
+            pass
+
+    # Rule-based fallback: extract what we can with regex
+    lines = [l.strip() for l in text.split('\n') if l.strip()]
+    personal = {"fullName": "", "title": "", "email": "", "phone": "", "location": "",
+                "linkedin": "", "github": "", "website": "", "portfolio": "", "photo": ""}
+    summary = ""
+    experience = []
+    education = []
+    skills = {"technical": [], "tools": [], "soft": [], "languages": []}
+
+    # Extract email
+    email_match = re.search(r'[\w.+-]+@[\w-]+\.[\w.]+', text)
+    if email_match: personal["email"] = email_match.group()
+
+    # Extract phone
+    phone_match = re.search(r'[\+]?[\d\s\-\(\)]{7,}', text)
+    if phone_match: personal["phone"] = phone_match.group().strip()[:20]
+
+    # Extract LinkedIn
+    li_match = re.search(r'linkedin\.com/in/[\w-]+', text, re.I)
+    if li_match: personal["linkedin"] = li_match.group()
+
+    # Extract GitHub
+    gh_match = re.search(r'github\.com/[\w-]+', text, re.I)
+    if gh_match: personal["github"] = gh_match.group()
+
+    # First non-empty line is likely the name
+    if lines:
+        personal["fullName"] = lines[0][:60]
+        # Second line might be the title
+        if len(lines) > 1 and not '@' in lines[1] and len(lines[1]) < 60:
+            personal["title"] = lines[1]
+
+    # Find sections
+    section_headers = ['experience', 'work history', 'employment', 'education', 'skills',
+                       'projects', 'certifications', 'languages', 'summary', 'objective', 'profile']
+    current_section = None
+    section_lines = {}
+
+    for line in lines:
+        lower = line.lower().strip()
+        if any(h in lower for h in section_headers) and len(line) < 30:
+            current_section = lower
+            section_lines[current_section] = []
+        elif current_section:
+            section_lines.setdefault(current_section, []).append(line)
+
+    # Parse summary
+    for key in ['summary', 'objective', 'profile']:
+        if key in section_lines:
+            summary = ' '.join(section_lines[key])[:500]
+            break
+
+    # Parse experience
+    for key in ['experience', 'work history', 'employment']:
+        if key in section_lines:
+            for line in section_lines[key]:
+                if re.search(r'\d{4}', line) and ('–' in line or '-' in line or 'present' in line.lower()):
+                    parts = re.split(r'[–\-]', line)
+                    experience.append({
+                        "id": "", "jobTitle": line.split('\n')[0][:60],
+                        "company": "", "location": "", "start": "", "end": "", "current": False,
+                        "description": "", "bullets": []
+                    })
+
+    # Parse skills
+    for key in ['skills']:
+        if key in section_lines:
+            all_skills = ' '.join(section_lines[key])
+            skill_list = [s.strip() for s in re.split(r'[,|•·]', all_skills) if s.strip() and len(s.strip()) < 30]
+            skills["technical"] = skill_list[:10]
+
+    # Parse education
+    for key in ['education']:
+        if key in section_lines:
+            for line in section_lines[key]:
+                if re.search(r' university|college|institute|school|b\.?s\.?c?|m\.?s\.?c?|b\.?a\.?|m\.?a\.?|phd|mba|degree', line, re.I):
+                    education.append({
+                        "institution": line[:80], "degree": "", "field": "",
+                        "start": "", "end": ""
+                    })
+
+    return {"resume": {
+        "personal": personal, "summary": summary, "experience": experience,
+        "skills": skills, "education": education,
+        "projects": [], "certifications": [], "languages": [], "awards": [],
+        "volunteering": [], "interests": "", "references": ""
+    }, "provider": "rule-based"}
+
+
 @app.get("/api/health")
 def health(db: Session = Depends(get_db)):
     backend = "postgres" if DATABASE_URL.startswith("postgresql") else "sqlite"

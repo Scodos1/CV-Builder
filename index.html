@@ -7,6 +7,8 @@
 <!-- NOTE: full CSP via hosting headers on deploy (inline scripts + Tailwind CDN need allowlisting); api() already timeouts + truncates errors. -->
 <title>MONO — Resume Studio | Professional CV Builder</title>
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js"></script>
 <script>
 tailwind.config = {
   darkMode: 'class',
@@ -427,6 +429,8 @@ input[type=range]{accent-color:#111}
           <option value="updated">Recently updated</option><option value="name">Name A–Z</option><option value="completion">Completion</option><option value="created">Recently created</option>
         </select>
         <button onclick="openNewResume()" class="px-6 py-2.5 bg-black text-white dark:bg-white dark:text-black rounded-full font-bold text-sm hover:opacity-80 btn-press">+ New resume</button>
+        <button onclick="$('uploadInput').click()" class="px-6 py-2.5 border border-neutral-300 dark:border-neutral-700 rounded-full font-bold text-sm hover:bg-neutral-100 dark:hover:bg-neutral-900 transition">↑ Upload resume</button>
+        <input id="uploadInput" type="file" accept=".pdf,.docx,.doc,.txt" class="hidden" onchange="handleUpload(event)"/>
       </div>
     </div>
     <div class="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-3" id="dashStats"></div>
@@ -1414,6 +1418,60 @@ function wizBuild(){
   })();
 }
 function createResume(){ openNewResume(); }
+
+/* ---------- Upload resume ---------- */
+async function handleUpload(e){
+  const file=e.target.files[0]; if(!file) return;
+  e.target.value='';
+  const ext=file.name.split('.').pop().toLowerCase();
+  toast('Reading '+file.name+'…','info');
+  let text='';
+  try{
+    if(ext==='txt'){
+      text=await file.text();
+    } else if(ext==='pdf'){
+      const buf=await file.arrayBuffer();
+      const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+      const pages=[];
+      for(let i=1;i<=pdf.numPages;i++){
+        const page=await pdf.getPage(i);
+        const content=await page.getTextContent();
+        pages.push(content.items.map(item=>item.str).join(' '));
+      }
+      text=pages.join('\n');
+    } else if(ext==='docx'||ext==='doc'){
+      const buf=await file.arrayBuffer();
+      const result=await mammoth.extractRawText({arrayBuffer:buf});
+      text=result.value;
+    } else {
+      toast('Unsupported file type: .'+ext,'warn'); return;
+    }
+  }catch(err){ toast('Failed to read file: '+err.message,'warn'); return; }
+  if(!text.trim()){toast('Could not extract text from file','warn'); return;}
+  toast('Parsing resume with AI…','info');
+  let remote=null;
+  try{ remote=await aiViaBackend('/api/ai/parse-resume/',{text}); }catch(err){}
+  const data=(remote&&remote.resume)?remote.resume:null;
+  const name=file.name.replace(/\.[^.]+$/,'')||'Uploaded Resume';
+  const r=blankResume(DB.session,name,'modern',false);
+  if(data){
+    if(data.personal) Object.assign(r.personal,data.personal);
+    if(data.summary) r.summary=data.summary;
+    if(data.experience) r.experience=data.experience.map(e=>({...e,id:uid(),bullets:e.bullets||[]}));
+    if(data.education) r.education=data.education.map(e=>({...e,id:uid()}));
+    if(data.skills) r.skills=data.skills;
+    if(data.projects) r.projects=data.projects.map(p=>({...p,id:uid()}));
+    if(data.certifications) r.certifications=data.certifications.map(c=>({...c,id:uid()}));
+    if(data.languages) r.languages=data.languages;
+    r.hidden=['volunteering','references'];
+  } else {
+    // Rule-based: just put raw text as summary
+    r.summary=text.slice(0,1000);
+  }
+  DB.resumes.push(r); persist();
+  toast('Resume uploaded ✓ — review and edit');
+  openBuilder(r.id);
+}
 
 /* ---------- Templates gallery ---------- */
 function tplMiniHTML(t){
