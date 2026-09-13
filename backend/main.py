@@ -391,156 +391,116 @@ def analyze_job(p: dict, req: Request):
 @app.post("/api/ai/build-resume/")
 def build_resume(p: dict, req: Request):
     rl_ai(req)
-    role = str((p or {}).get("role") or "Professional")[:80]
-    level = str((p or {}).get("experience_level") or "mid")[:20]
-    skills = (p or {}).get("skills") or []
-    skills = [str(s)[:40] for s in skills][:10]
-    education = (p or {}).get("education") or {}
-    extras = str((p or {}).get("extras") or "")[:500]
+    p = p or {}
+    role = str(p.get("role") or "Professional")[:80]
+    level = str(p.get("experience_level") or "mid")[:20]
+    skills = [str(s)[:40] for s in (p.get("skills") or [])][:10]
+    education = p.get("education") or {}
+    personal = p.get("personal") or {}
+    user_exp = p.get("experience") or []
+    user_projs = p.get("projects") or []
+    user_certs = p.get("certifications") or []
+    user_langs = p.get("languages") or []
 
     level_label = {"junior":"Junior","mid":"Mid-Level","senior":"Senior","lead":"Lead"}.get(level,"Mid-Level")
     years_map = {"junior":"0–2","mid":"3–5","senior":"5–8","lead":"8+"}
     years = years_map.get(level, "3–5")
 
-    # Try LLM for richer content
-    edu_str = ""
-    if education:
-        edu_str = f"\nEducation: {education.get('degree','')} in {education.get('field','')} from {education.get('school','')} ({education.get('year','')})"
-    prompt = (f"Build resume content for a {level_label} {role} ({years} experience).\n"
-              f"Skills: {', '.join(skills)}\n{edu_str}\n"
-              f"Extras: {extras}\n\n"
-              f"Return ONLY valid JSON with these keys: summary (2-3 sentences), "
-              f"experience (array of 1-2 objects with jobTitle, company, description, bullets (array of 3-4 strings)), "
-              f"skills object with technical/tools/soft arrays. "
-              f"Companies should be realistic but generic (e.g. 'Tech Startup', 'Growth Company'). "
-              f"Bullets must start with action verbs and include quantified impact where possible.")
-    llm_out = _llm(prompt, system=SYSTEM_BUILDER, max_tokens=800)
+    # Build LLM prompt with user's real data
+    exp_str = ""
+    for e in user_exp[:5]:
+        bullets = "\n".join(f"  - {b}" for b in (e.get("bullets") or [])[:5])
+        exp_str += f"\n{e.get('title','')} at {e.get('company','')} ({e.get('start','')}–{e.get('end','present')})\n{bullets}\n"
+    proj_str = "\n".join(f"- {pr.get('name','')}: {pr.get('description','')} [{pr.get('tech','')}]" for pr in user_projs[:5])
+    cert_str = "\n".join(f"- {c.get('name','')} ({c.get('org','')}, {c.get('start','')})" for c in user_certs[:5])
+    lang_str = ", ".join(f"{l.get('lang','')} ({l.get('level','')})" for l in user_langs[:6])
+    edu_str = f"\nEducation: {education.get('degree','')} in {education.get('field','')} from {education.get('school','')} ({education.get('startYear','')}–{education.get('endYear','')})" if education else ""
+
+    prompt = (f"You are building a professional resume for a {level_label} {role}.\n\n"
+              f"CONTACT: {personal.get('name','')} | {personal.get('email','')} | {personal.get('phone','')} | {personal.get('location','')}\n"
+              f"LINKEDIN: {personal.get('linkedin','')} | GITHUB: {personal.get('github','')} | WEBSITE: {personal.get('website','')}\n"
+              f"SKILLS: {', '.join(skills)}\n{edu_str}\n"
+              f"WORK EXPERIENCE:\n{exp_str}\n"
+              f"PROJECTS:\n{proj_str}\n"
+              f"CERTIFICATIONS:\n{cert_str}\n"
+              f"LANGUAGES: {lang_str}\n\n"
+              f"Write a 2-3 sentence professional summary based on the above.\n"
+              f"Polish each bullet point to start with a strong action verb and include quantified impact.\n"
+              f"Return ONLY valid JSON with keys: summary (string), experience (array of objects with jobTitle, company, start, end, current (bool), description (string), bullets (array of strings)), "
+              f"projects (array with name, description, tech (array), url), certifications (array with name, org, start), languages (array with lang, level).\n"
+              f"Keep all real facts. Do NOT invent employers, dates, or metrics not provided above.")
+    llm_out = _llm(prompt, system=SYSTEM_BUILDER, max_tokens=1200)
 
     provider = "rule-based"
     if llm_out:
         try:
             import json as _json
-            # Try to extract JSON from LLM response
             match = re.search(r'\{[\s\S]*\}', llm_out)
             if match:
                 data = _json.loads(match.group())
                 provider = AI_PROVIDER
-                summary = data.get("summary", "")
-                experience = data.get("experience", [])
-                llm_skills = data.get("skills", {})
                 # Normalize experience
-                for e in experience:
+                for e in data.get("experience", []):
                     e.setdefault("id", "")
                     e.setdefault("location", "")
-                    e.setdefault("start", "")
-                    e.setdefault("end", "")
                     e.setdefault("current", False)
                     e.setdefault("bullets", [])
-                # Normalize skills
-                if llm_skills:
-                    skills_obj = {
-                        "technical": llm_skills.get("technical", skills[:5]),
-                        "tools": llm_skills.get("tools", skills[5:8]),
-                        "soft": llm_skills.get("soft", ["Communication", "Teamwork", "Problem Solving"]),
-                        "languages": []
-                    }
-                else:
-                    skills_obj = {"technical": skills[:5], "tools": skills[5:8], "soft": ["Communication", "Teamwork", "Problem Solving"], "languages": []}
-                # Education
-                edu_list = []
-                if education:
-                    edu_list = [{"institution": str(education.get("school","University"))[:80], "degree": str(education.get("degree","B.Sc."))[:30], "field": str(education.get("field",role))[:60], "start": str(education.get("year","2020"))[:10], "end": str(education.get("year","2024"))[:10]}]
                 result = {
-                    "personal": {"fullName": "", "title": f"{level_label} {role}", "email": "", "phone": "", "location": "", "website": "", "linkedin": "", "github": "", "portfolio": "", "photo": ""},
-                    "summary": summary,
-                    "experience": experience[:2],
-                    "skills": skills_obj,
-                    "education": edu_list,
-                    "projects": [], "certifications": [], "languages": [], "awards": [],
-                    "volunteering": [], "interests": extras[:200] if extras else "", "references": ""
+                    "personal": {"fullName": personal.get("name",""), "title": f"{level_label} {role}",
+                                 "email": personal.get("email",""), "phone": personal.get("phone",""),
+                                 "location": personal.get("location",""), "website": personal.get("website",""),
+                                 "linkedin": personal.get("linkedin",""), "github": personal.get("github",""),
+                                 "portfolio": "", "photo": ""},
+                    "summary": data.get("summary", ""),
+                    "experience": data.get("experience", [])[:5],
+                    "skills": data.get("skills", {"technical": skills[:5], "tools": skills[5:8], "soft": ["Communication","Teamwork","Problem Solving"], "languages": []}),
+                    "education": [{"institution": str(education.get("school",""))[:80], "degree": str(education.get("degree",""))[:30], "field": str(education.get("field",""))[:60], "start": str(education.get("startYear",""))[:10], "end": str(education.get("endYear",""))[:10]}] if education else [],
+                    "projects": data.get("projects", [])[:5],
+                    "certifications": data.get("certifications", [])[:5],
+                    "languages": data.get("languages", user_langs),
+                    "awards": [], "volunteering": [], "interests": "", "references": ""
                 }
                 return {"resume": result, "provider": provider}
         except Exception:
-            pass  # Fall through to rule-based
+            pass
 
-    # Rule-based fallback
-    summary = (f"{level_label} {role} with {years} years of experience building high-quality solutions. "
-               f"Proficient in {', '.join(skills[:3]) if skills else 'relevant technologies'}. "
-               f"Committed to delivering measurable results through collaboration and best practices.")
-    if len(skills) > 3:
-        summary += f" Additional expertise in {', '.join(skills[3:6])}."
+    # Rule-based fallback: use user's real data directly
+    summary = (f"{level_label} {role} with {years} of experience"
+               f"{', proficient in ' + ', '.join(skills[:4]) if skills else ''}."
+               f"{' Proven track record delivering measurable results.' if any(e.get('bullets') for e in user_exp) else ''}")
 
     experience = []
-    if level == "junior":
+    for e in user_exp[:5]:
         experience.append({
-            "jobTitle": f"{role}", "company": "Tech Startup", "location": "",
-            "start": "2024-01", "end": "", "current": True,
-            "description": f"Contributing to {role.lower()} tasks in an agile team.",
-            "bullets": [
-                f"Collaborated with senior engineers to deliver {role.lower()} features on schedule",
-                f"Applied {skills[0] if skills else 'core technologies'} to solve production issues",
-                "Participated in code reviews and adopted team engineering standards"
-            ]
+            "id": "", "jobTitle": e.get("title",""), "company": e.get("company",""),
+            "location": "", "start": e.get("start",""), "end": e.get("end",""),
+            "current": not e.get("end"), "description": "",
+            "bullets": [b for b in (e.get("bullets") or []) if b][:5]
         })
-    elif level == "mid":
-        experience.append({
-            "jobTitle": f"{role}", "company": "Growth Company", "location": "",
-            "start": "2022-06", "end": "", "current": True,
-            "description": f"Leading {role.lower()} initiatives across multiple projects.",
-            "bullets": [
-                f"Delivered {role.lower()} solutions serving hundreds of users",
-                f"Improved processes using {skills[0] if skills else 'best practices'}, reducing turnaround time",
-                "Mentored junior team members and contributed to architectural decisions"
-            ]
-        })
-    elif level == "senior":
-        experience.append({
-            "jobTitle": f"Senior {role}", "company": "Leading Company", "location": "",
-            "start": "2021-03", "end": "", "current": True,
-            "description": f"Driving {role.lower()} strategy and mentoring engineering teams.",
-            "bullets": [
-                f"Architected and shipped {role.lower()} systems impacting thousands of users",
-                f"Led adoption of {skills[0] if skills else 'modern practices'} across the team",
-                "Reduced technical debt by refactoring critical modules and enforcing code standards",
-                "Mentored 3+ engineers and led sprint planning for cross-functional projects"
-            ]
-        })
-    else:
-        experience.append({
-            "jobTitle": f"Lead {role}", "company": "Enterprise Org", "location": "",
-            "start": "2019-01", "end": "", "current": True,
-            "description": f"Setting {role.lower()} technical direction and leading large teams.",
-            "bullets": [
-                f"Defined {role.lower()} architecture used across multiple product lines",
-                f"Drove adoption of {skills[0] if skills else 'scalable patterns'}, improving system reliability",
-                "Led a team of 8+ engineers through full product lifecycles",
-                "Established engineering best practices including CI/CD, code review and testing standards"
-            ]
-        })
+
+    projects = [{"id":"", "name":pr.get("name",""), "description":pr.get("description",""),
+                 "tech":[t.strip() for t in pr.get("tech","").split(",") if t.strip()],
+                 "url":pr.get("url",""), "github":"", "date":""} for pr in user_projs[:5]]
+    certs = [{"id":"", "name":c.get("name",""), "org":c.get("org",""),
+              "start":c.get("start",""), "end":"", "credId":"", "url":""} for c in user_certs[:5]]
 
     edu = {}
     if education:
-        edu = {
-            "institution": str(education.get("school") or "University")[:80],
-            "degree": str(education.get("degree") or "B.Sc.")[:30],
-            "field": str(education.get("field") or role)[:60],
-            "start": str(education.get("year") or "2020")[:10],
-            "end": str(education.get("year") or "2024")[:10]
-        }
+        edu = {"institution": str(education.get("school","University"))[:80], "degree": str(education.get("degree","B.Sc."))[:30],
+               "field": str(education.get("field",role))[:60], "start": str(education.get("startYear",""))[:10], "end": str(education.get("endYear",""))[:10]}
 
     result = {
-        "personal": {"fullName": "", "title": f"{level_label} {role}", "email": "", "phone": "", "location": "", "website": "", "linkedin": "", "github": "", "portfolio": "", "photo": ""},
+        "personal": {"fullName": personal.get("name",""), "title": f"{level_label} {role}",
+                     "email": personal.get("email",""), "phone": personal.get("phone",""),
+                     "location": personal.get("location",""), "website": personal.get("website",""),
+                     "linkedin": personal.get("linkedin",""), "github": personal.get("github",""),
+                     "portfolio": "", "photo": ""},
         "summary": summary,
         "experience": experience,
-        "skills": {
-            "technical": skills[:5],
-            "tools": skills[5:8],
-            "soft": ["Communication", "Teamwork", "Problem Solving"],
-            "languages": []
-        },
+        "skills": {"technical": skills[:5], "tools": skills[5:8], "soft": ["Communication","Teamwork","Problem Solving"], "languages": []},
         "education": [edu] if edu else [],
-        "projects": [], "certifications": [], "languages": [], "awards": [],
-        "volunteering": [], "interests": extras[:200] if extras else "", "references": ""
+        "projects": projects, "certifications": certs, "languages": user_langs,
+        "awards": [], "volunteering": [], "interests": "", "references": ""
     }
     return {"resume": result, "provider": provider}
 

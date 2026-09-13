@@ -574,33 +574,62 @@ input[type=range]{accent-color:#111}
   <div class="absolute inset-0 bg-black/60 modal-bg" onclick="closeModal('modalNew')"></div>
   <div class="relative bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-7 md:p-9 slide-in">
     <!-- Progress -->
-    <div class="flex items-center gap-1.5 mb-6">
+    <div class="flex items-center gap-1 mb-6">
       <div id="wizDot1" class="h-1.5 flex-1 rounded-full bg-black dark:bg-white"></div>
       <div id="wizDot2" class="h-1.5 flex-1 rounded-full bg-neutral-200 dark:bg-neutral-800"></div>
       <div id="wizDot3" class="h-1.5 flex-1 rounded-full bg-neutral-200 dark:bg-neutral-800"></div>
       <div id="wizDot4" class="h-1.5 flex-1 rounded-full bg-neutral-200 dark:bg-neutral-800"></div>
       <div id="wizDot5" class="h-1.5 flex-1 rounded-full bg-neutral-200 dark:bg-neutral-800"></div>
+      <div id="wizDot6" class="h-1.5 flex-1 rounded-full bg-neutral-200 dark:bg-neutral-800"></div>
+      <div id="wizDot7" class="h-1.5 flex-1 rounded-full bg-neutral-200 dark:bg-neutral-800"></div>
+      <div id="wizDot8" class="h-1.5 flex-1 rounded-full bg-neutral-200 dark:bg-neutral-800"></div>
     </div>
 
-    <!-- Step 1: Role -->
+    <!-- Step 1: Personal Info -->
     <div id="wizStep1" class="wiz-step">
+      <h3 class="text-2xl md:text-3xl font-extrabold tracking-tight">About you</h3>
+      <p class="text-sm opacity-60 mt-1">Basic contact details. You can edit everything later.</p>
+      <div class="mt-6 space-y-4">
+        <div><label class="block text-xs font-bold uppercase tracking-widest opacity-60">Full name</label>
+          <input id="wizName" placeholder="e.g. Amara Okafor" class="field mt-2 w-full border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-black"/></div>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="block text-xs font-bold uppercase tracking-widest opacity-60">Email</label>
+            <input id="wizEmail" type="email" placeholder="you@email.com" class="field mt-2 w-full border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-black"/></div>
+          <div><label class="block text-xs font-bold uppercase tracking-widest opacity-60">Phone</label>
+            <input id="wizPhone" placeholder="+234 801 234 5678" class="field mt-2 w-full border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-black"/></div>
+        </div>
+        <div><label class="block text-xs font-bold uppercase tracking-widest opacity-60">Location</label>
+          <input id="wizLocation" placeholder="e.g. Lagos, Nigeria" class="field mt-2 w-full border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-black"/></div>
+        <div class="grid grid-cols-3 gap-3">
+          <div><label class="block text-xs font-bold uppercase tracking-widest opacity-60">LinkedIn</label>
+            <input id="wizLinkedin" placeholder="linkedin.com/in/you" class="field mt-2 w-full border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-black"/></div>
+          <div><label class="block text-xs font-bold uppercase tracking-widest opacity-60">GitHub</label>
+            <input id="wizGithub" placeholder="github.com/you" class="field mt-2 w-full border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-black"/></div>
+          <div><label class="block text-xs font-bold uppercase tracking-widest opacity-60">Website</label>
+            <input id="wizWebsite" placeholder="yoursite.com" class="field mt-2 w-full border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-black"/></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: Role -->
+    <div id="wizStep2" class="wiz-step hidden">
       <h3 class="text-2xl md:text-3xl font-extrabold tracking-tight">What do you do?</h3>
       <p class="text-sm opacity-60 mt-1">Pick your role or type it in. This shapes everything.</p>
       <input id="wizRole" placeholder="e.g. Frontend Developer, Product Manager, Nurse" class="field mt-6 w-full border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-3.5 text-sm bg-white dark:bg-black" onkeydown="if(event.key==='Enter')wizNext()"/>
       <div class="mt-3 flex flex-wrap gap-2">
-        <button onclick="$('wizRole').value='Frontend Developer'" class="px-3 py-1.5 rounded-full bg-neutral-100 dark:bg-neutral-900 hover:bg-neutral-200 text-xs font-bold">Frontend Dev</button>
-        <button onclick="$('wizRole').value='Backend Developer'" class="px-3 py-1.5 rounded-full bg-neutral-100 dark:bg-neutral-900 hover:bg-neutral-200 text-xs font-bold">Backend Dev</button>
-        <button onclick="$('wizRole').value='Full-Stack Developer'" class="px-3 py-1.5 rounded-full bg-neutral-100 dark:bg-neutral-900 hover:bg-neutral-200 text-xs font-bold">Full-Stack</button>
-        <button onclick="$('wizRole').value='Product Manager'" class="px-3 py-1.5 rounded-full bg-neutral-100 dark:bg-neutral-900 hover:bg-neutral-200 text-xs font-bold">Product Manager</button>
-        <button onclick="$('wizRole').value='Data Analyst'" class="px-3 py-1.5 rounded-full bg-neutral-100 dark:bg-neutral-900 hover:bg-neutral-200 text-xs font-bold">Data Analyst</button>
-        <button onclick="$('wizRole').value='UI/UX Designer'" class="px-3 py-1.5 rounded-full bg-neutral-100 dark:bg-neutral-900 hover:bg-neutral-200 text-xs font-bold">Designer</button>
-        <button onclick="$('wizRole').value='Marketing Specialist'" class="px-3 py-1.5 rounded-full bg-neutral-100 dark:bg-neutral-900 hover:bg-neutral-200 text-xs font-bold">Marketing</button>
-        <button onclick="$('wizRole').value='Business Analyst'" class="px-3 py-1.5 rounded-full bg-neutral-100 dark:bg-neutral-900 hover:bg-neutral-200 text-xs font-bold">Business Analyst</button>
+        <button type="button" onclick="$('wizRole').value='Frontend Developer'" class="px-3 py-1.5 rounded-full bg-neutral-100 dark:bg-neutral-900 hover:bg-neutral-200 text-xs font-bold">Frontend Dev</button>
+        <button type="button" onclick="$('wizRole').value='Backend Developer'" class="px-3 py-1.5 rounded-full bg-neutral-100 dark:bg-neutral-900 hover:bg-neutral-200 text-xs font-bold">Backend Dev</button>
+        <button type="button" onclick="$('wizRole').value='Full-Stack Developer'" class="px-3 py-1.5 rounded-full bg-neutral-100 dark:bg-neutral-900 hover:bg-neutral-200 text-xs font-bold">Full-Stack</button>
+        <button type="button" onclick="$('wizRole').value='Product Manager'" class="px-3 py-1.5 rounded-full bg-neutral-100 dark:bg-neutral-900 hover:bg-neutral-200 text-xs font-bold">Product Manager</button>
+        <button type="button" onclick="$('wizRole').value='Data Analyst'" class="px-3 py-1.5 rounded-full bg-neutral-100 dark:bg-neutral-900 hover:bg-neutral-200 text-xs font-bold">Data Analyst</button>
+        <button type="button" onclick="$('wizRole').value='UI/UX Designer'" class="px-3 py-1.5 rounded-full bg-neutral-100 dark:bg-neutral-900 hover:bg-neutral-200 text-xs font-bold">Designer</button>
+        <button type="button" onclick="$('wizRole').value='Marketing Specialist'" class="px-3 py-1.5 rounded-full bg-neutral-100 dark:bg-neutral-900 hover:bg-neutral-200 text-xs font-bold">Marketing</button>
+        <button type="button" onclick="$('wizRole').value='Business Analyst'" class="px-3 py-1.5 rounded-full bg-neutral-100 dark:bg-neutral-900 hover:bg-neutral-200 text-xs font-bold">Business Analyst</button>
       </div>
     </div>
 
-    <!-- Step 2: Experience Level -->
-    <div id="wizStep2" class="wiz-step hidden">
+    <!-- Step 3: Experience Level -->
+    <div id="wizStep3" class="wiz-step hidden">
       <h3 class="text-2xl md:text-3xl font-extrabold tracking-tight">Your experience level</h3>
       <p class="text-sm opacity-60 mt-1">This adjusts the tone, bullet depth and achievements.</p>
       <div class="mt-6 grid grid-cols-2 gap-3">
@@ -619,8 +648,16 @@ input[type=range]{accent-color:#111}
       </div>
     </div>
 
-    <!-- Step 3: Skills -->
-    <div id="wizStep3" class="wiz-step hidden">
+    <!-- Step 4: Work Experience -->
+    <div id="wizStep4" class="wiz-step hidden">
+      <h3 class="text-2xl md:text-3xl font-extrabold tracking-tight">Work experience</h3>
+      <p class="text-sm opacity-60 mt-1">Add your most recent roles. The AI will polish the bullets.</p>
+      <div id="wizExpList" class="mt-6 space-y-4"></div>
+      <button type="button" onclick="wizAddExp()" class="mt-4 w-full py-3 border-2 border-dashed border-neutral-300 dark:border-neutral-700 rounded-2xl text-sm font-bold hover:border-black dark:hover:border-white transition">+ Add another role</button>
+    </div>
+
+    <!-- Step 5: Skills -->
+    <div id="wizStep5" class="wiz-step hidden">
       <h3 class="text-2xl md:text-3xl font-extrabold tracking-tight">Top skills</h3>
       <p class="text-sm opacity-60 mt-1">Add 3–10 skills. These become your skills section and ATS keywords.</p>
       <input id="wizSkillInput" placeholder="Type a skill and press Enter" class="field mt-6 w-full border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-3.5 text-sm bg-white dark:bg-black" onkeydown="if(event.key==='Enter'){event.preventDefault();wizAddSkill()}"/>
@@ -628,47 +665,69 @@ input[type=range]{accent-color:#111}
       <div class="mt-3 text-xs opacity-50">Click a tag to remove it</div>
     </div>
 
-    <!-- Step 4: Education -->
-    <div id="wizStep4" class="wiz-step hidden">
+    <!-- Step 6: Education -->
+    <div id="wizStep6" class="wiz-step hidden">
       <h3 class="text-2xl md:text-3xl font-extrabold tracking-tight">Education</h3>
       <p class="text-sm opacity-60 mt-1">Optional but adds credibility. Fill what you can.</p>
-      <label class="block mt-6 text-xs font-bold uppercase tracking-widest opacity-60">School / University</label>
-      <input id="wizEduSchool" placeholder="e.g. University of Lagos" class="field mt-2 w-full border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-black"/>
-      <div class="mt-4 grid grid-cols-2 gap-3">
-        <div><label class="block text-xs font-bold uppercase tracking-widest opacity-60">Degree</label>
-          <select id="wizEduDegree" class="field mt-2 w-full border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-black">
-            <option value="B.Sc.">B.Sc.</option><option value="B.A.">B.A.</option><option value="M.Sc.">M.Sc.</option><option value="M.A.">M.A.</option><option value="MBA">MBA</option><option value="PhD">PhD</option><option value="Diploma">Diploma</option><option value="Certificate">Certificate</option><option value="Other">Other</option>
-          </select>
+      <div class="mt-6 space-y-4">
+        <div><label class="block text-xs font-bold uppercase tracking-widest opacity-60">School / University</label>
+          <input id="wizEduSchool" placeholder="e.g. University of Lagos" class="field mt-2 w-full border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-black"/></div>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="block text-xs font-bold uppercase tracking-widest opacity-60">Degree</label>
+            <select id="wizEduDegree" class="field mt-2 w-full border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-black">
+              <option value="B.Sc.">B.Sc.</option><option value="B.A.">B.A.</option><option value="M.Sc.">M.Sc.</option><option value="M.A.">M.A.</option><option value="MBA">MBA</option><option value="PhD">PhD</option><option value="Diploma">Diploma</option><option value="Certificate">Certificate</option><option value="Other">Other</option>
+            </select></div>
+          <div><label class="block text-xs font-bold uppercase tracking-widest opacity-60">Field of Study</label>
+            <input id="wizEduField" placeholder="e.g. Computer Science" class="field mt-2 w-full border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-black"/></div>
         </div>
-        <div><label class="block text-xs font-bold uppercase tracking-widest opacity-60">Field of Study</label>
-          <input id="wizEduField" placeholder="e.g. Computer Science" class="field mt-2 w-full border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-black"/>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="block text-xs font-bold uppercase tracking-widest opacity-60">Start Year</label>
+            <input id="wizEduStart" placeholder="e.g. 2018" class="field mt-2 w-full border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-black"/></div>
+          <div><label class="block text-xs font-bold uppercase tracking-widest opacity-60">End Year</label>
+            <input id="wizEduEnd" placeholder="e.g. 2022" class="field mt-2 w-full border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-black"/></div>
         </div>
-      </div>
-      <div class="mt-4 grid grid-cols-2 gap-3">
-        <div><label class="block text-xs font-bold uppercase tracking-widest opacity-60">Start Year</label>
-          <input id="wizEduStart" placeholder="e.g. 2018" class="field mt-2 w-full border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-black"/></div>
-        <div><label class="block text-xs font-bold uppercase tracking-widest opacity-60">End Year</label>
-          <input id="wizEduEnd" placeholder="e.g. 2022" class="field mt-2 w-full border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-black"/></div>
       </div>
       <label class="mt-4 flex items-center gap-3 text-sm cursor-pointer">
         <input id="wizSkipEdu" type="checkbox" class="w-5 h-5 accent-black dark:accent-white"/> <span class="opacity-60">Skip education for now</span>
       </label>
     </div>
 
-    <!-- Step 5: Extras + Template -->
-    <div id="wizStep5" class="wiz-step hidden">
+    <!-- Step 7: Projects + Certifications + Languages -->
+    <div id="wizStep7" class="wiz-step hidden">
+      <h3 class="text-2xl md:text-3xl font-extrabold tracking-tight">Extras</h3>
+      <p class="text-sm opacity-60 mt-1">Projects, certifications, languages — all optional but strengthen your CV.</p>
+
+      <div class="mt-6">
+        <label class="block text-xs font-bold uppercase tracking-widest opacity-60">Projects</label>
+        <div id="wizProjList" class="mt-2 space-y-3"></div>
+        <button type="button" onclick="wizAddProj()" class="mt-2 w-full py-2.5 border-2 border-dashed border-neutral-300 dark:border-neutral-700 rounded-xl text-xs font-bold hover:border-black dark:hover:border-white transition">+ Add project</button>
+      </div>
+
+      <div class="mt-6">
+        <label class="block text-xs font-bold uppercase tracking-widest opacity-60">Certifications</label>
+        <div id="wizCertList" class="mt-2 space-y-3"></div>
+        <button type="button" onclick="wizAddCert()" class="mt-2 w-full py-2.5 border-2 border-dashed border-neutral-300 dark:border-neutral-700 rounded-xl text-xs font-bold hover:border-black dark:hover:border-white transition">+ Add certification</button>
+      </div>
+
+      <div class="mt-6">
+        <label class="block text-xs font-bold uppercase tracking-widest opacity-60">Languages</label>
+        <div id="wizLangList" class="mt-2 space-y-3"></div>
+        <button type="button" onclick="wizAddLang()" class="mt-2 w-full py-2.5 border-2 border-dashed border-neutral-300 dark:border-neutral-700 rounded-xl text-xs font-bold hover:border-black dark:hover:border-white transition">+ Add language</button>
+      </div>
+    </div>
+
+    <!-- Step 8: Template + Extras -->
+    <div id="wizStep8" class="wiz-step hidden">
       <h3 class="text-2xl md:text-3xl font-extrabold tracking-tight">Final touches</h3>
-      <p class="text-sm opacity-60 mt-1">Pick a template and add any extras.</p>
+      <p class="text-sm opacity-60 mt-1">Pick a template and name your resume.</p>
       <label class="block mt-6 text-xs font-bold uppercase tracking-widest opacity-60">Template</label>
       <div id="newTplGrid" class="mt-3 grid grid-cols-2 md:grid-cols-4 gap-3"></div>
-      <label class="block mt-6 text-xs font-bold uppercase tracking-widest opacity-60">Anything else? (optional)</label>
-      <textarea id="wizExtras" placeholder="e.g. AWS certified, speak Spanish, open-source contributor…" rows="3" class="field mt-2 w-full border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-black resize-none"></textarea>
-      <label class="block mt-4 text-xs font-bold uppercase tracking-widest opacity-60">Resume name</label>
+      <label class="block mt-6 text-xs font-bold uppercase tracking-widest opacity-60">Resume name</label>
       <input id="wizResumeName" placeholder="e.g. Frontend Developer CV" class="field mt-2 w-full border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-black"/>
     </div>
 
-    <!-- Step 6: Building -->
-    <div id="wizStep6" class="wiz-step hidden text-center py-12">
+    <!-- Step 9: Building -->
+    <div id="wizStep9" class="wiz-step hidden text-center py-12">
       <div class="inline-block w-12 h-12 border-4 border-neutral-200 dark:border-neutral-700 border-t-black dark:border-t-white rounded-full animate-spin"></div>
       <h3 class="text-xl font-extrabold mt-4">Building your resume…</h3>
       <p class="text-sm opacity-60 mt-1" id="wizStatus">Gathering your answers…</p>
@@ -1147,40 +1206,117 @@ function deleteResume(id){ const r=DB.resumes.find(x=>x.id===id); if(!confirm('D
 function downloadFromDash(id){ openBuilder(id); setTimeout(exportPDF,400); }
 
 /* ---------- New resume wizard ---------- */
-let newTpl='modern', wizStep=1, wizLevel='mid', wizSkills=[];
+let newTpl='modern', wizStep=1, wizLevel='mid', wizSkills=[], wizExp=[], wizProjs=[], wizCerts=[], wizLangs=[];
 function openNewResume(){
-  wizStep=1; wizLevel='mid'; wizSkills=[];
-  $('wizRole').value=''; $('wizSkillInput').value=''; $('wizSkillTags').innerHTML='';
-  $('wizEduSchool').value=''; $('wizEduField').value=''; $('wizEduStart').value=''; $('wizEduEnd').value='';
-  $('wizSkipEdu').checked=false; $('wizExtras').value=''; $('wizResumeName').value='';
+  wizStep=1; wizLevel='mid'; wizSkills=[]; wizExp=[]; wizProjs=[]; wizCerts=[]; wizLangs=[];
+  ['wizName','wizEmail','wizPhone','wizLocation','wizLinkedin','wizGithub','wizWebsite','wizRole','wizSkillInput','wizEduSchool','wizEduField','wizEduStart','wizEduEnd','wizResumeName'].forEach(id=>{if($(id))$(id).value='';});
+  ['wizSkillTags','wizExpList','wizProjList','wizCertList','wizLangList'].forEach(id=>{if($(id))$(id).innerHTML='';});
+  if($('wizSkipEdu')) $('wizSkipEdu').checked=false;
   document.querySelectorAll('.wiz-level').forEach(b=>b.classList.remove('border-black','dark:border-white'));
   newTpl='modern'; renderNewTplGrid();
   wizShow(1); openModal('modalNew');
 }
 function wizShow(n){
   wizStep=n;
-  for(let i=1;i<=6;i++) document.getElementById('wizStep'+i).classList.toggle('hidden',i!==n);
-  for(let i=1;i<=5;i++) document.getElementById('wizDot'+i).className='h-1.5 flex-1 rounded-full '+(i<=n?'bg-black dark:bg-white':'bg-neutral-200 dark:bg-neutral-800');
-  $('wizBack').classList.toggle('hidden',n===1||n===6);
-  $('wizNav').classList.toggle('hidden',n===6);
-  if(n===5){ $('wizResumeName').value=$('wizRole').value?$('wizRole').value+' CV':''; }
+  for(let i=1;i<=9;i++){const el=document.getElementById('wizStep'+i);if(el)el.classList.toggle('hidden',i!==n);}
+  for(let i=1;i<=8;i++){const dot=document.getElementById('wizDot'+i);if(dot)dot.className='h-1.5 flex-1 rounded-full '+(i<=n?'bg-black dark:bg-white':'bg-neutral-200 dark:bg-neutral-800');}
+  $('wizBack').classList.toggle('hidden',n===1||n===9);
+  $('wizNav').classList.toggle('hidden',n===9);
+  if(n===4&&!wizExp.length) wizAddExp();
+  if(n===7){if(!wizProjs.length)wizAddProj();if(!wizLangs.length)wizAddLang();}
+  if(n===8){ const rn=$('wizName').value.trim(), rl=$('wizRole').value.trim(); $('wizResumeName').value=rn?rn.split(' ')[0]+"'s "+rl+' CV':rl+' CV'; }
 }
 function wizSetLevel(btn,lvl){
   document.querySelectorAll('.wiz-level').forEach(b=>{b.classList.remove('border-black','dark:border-white');b.style.pointerEvents='auto';});
   btn.classList.add('border-black','dark:border-white'); wizLevel=lvl;
-  setTimeout(()=>wizShow(3),300);
+  setTimeout(()=>wizShow(4),300);
 }
+
+/* --- Experience (multi-entry) --- */
+function wizAddExp(){
+  const id=wizExp.length; wizExp.push({title:'',company:'',start:'',end:'',current:false,bullets:''});
+  wizRenderExp();
+}
+function wizRemoveExp(i){ wizExp.splice(i,1); wizRenderExp(); }
+function wizRenderExp(){
+  $('wizExpList').innerHTML=wizExp.map((e,i)=>`
+    <div class="border border-neutral-200 dark:border-neutral-800 rounded-2xl p-4 relative">
+      <button type="button" onclick="wizRemoveExp(${i})" class="absolute top-3 right-3 text-xs opacity-40 hover:opacity-100">✕</button>
+      <div class="text-[10px] font-mono opacity-40 mb-3">ROLE ${i+1}</div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="block text-[10px] font-bold uppercase tracking-widest opacity-60">Job title</label>
+          <input value="${esc(e.title)}" onchange="wizExp[${i}].title=this.value" placeholder="e.g. Frontend Engineer" class="field mt-1.5 w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-black"/></div>
+        <div><label class="block text-[10px] font-bold uppercase tracking-widest opacity-60">Company</label>
+          <input value="${esc(e.company)}" onchange="wizExp[${i}].company=this.value" placeholder="e.g. Paystack" class="field mt-1.5 w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-black"/></div>
+      </div>
+      <div class="grid grid-cols-2 gap-3 mt-3">
+        <div><label class="block text-[10px] font-bold uppercase tracking-widest opacity-60">Start</label>
+          <input value="${esc(e.start)}" onchange="wizExp[${i}].start=this.value" placeholder="e.g. 2022-03" class="field mt-1.5 w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-black"/></div>
+        <div><label class="block text-[10px] font-bold uppercase tracking-widest opacity-60">End</label>
+          <input value="${esc(e.end)}" onchange="wizExp[${i}].end=this.value" placeholder="Leave empty if current" class="field mt-1.5 w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-black"/></div>
+      </div>
+      <div class="mt-3"><label class="block text-[10px] font-bold uppercase tracking-widest opacity-60">Key achievements (one per line — the AI will polish them)</label>
+        <textarea onchange="wizExp[${i}].bullets=this.value" rows="3" placeholder="Built a dashboard used by 500K+ users&#10;Reduced load time by 40%&#10;Led a team of 4 engineers" class="field mt-1.5 w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-black resize-none">${esc(e.bullets)}</textarea></div>
+    </div>`).join('');
+}
+
+/* --- Skills --- */
 function wizAddSkill(){
   const v=$('wizSkillInput').value.trim(); if(!v||wizSkills.length>=10||wizSkills.includes(v))return;
   wizSkills.push(v); $('wizSkillInput').value=''; wizRenderTags();
 }
 function wizRemoveSkill(i){ wizSkills.splice(i,1); wizRenderTags(); }
 function wizRenderTags(){
-  $('wizSkillTags').innerHTML=wizSkills.map((s,i)=>`        <button type="button" onclick="wizRemoveSkill(${i})" class="px-3 py-1.5 rounded-full bg-black text-white dark:bg-white dark:text-black text-xs font-bold hover:opacity-80">${esc(s)} ×</button>`).join('');
+  $('wizSkillTags').innerHTML=wizSkills.map((s,i)=>`<button type="button" onclick="wizRemoveSkill(${i})" class="px-3 py-1.5 rounded-full bg-black text-white dark:bg-white dark:text-black text-xs font-bold hover:opacity-80">${esc(s)} ×</button>`).join('');
 }
+
+/* --- Projects --- */
+function wizAddProj(){ wizProjs.push({name:'',description:'',tech:'',url:''}); wizRenderProj(); }
+function wizRemoveProj(i){ wizProjs.splice(i,1); wizRenderProj(); }
+function wizRenderProj(){
+  $('wizProjList').innerHTML=wizProjs.map((p,i)=>`
+    <div class="border border-neutral-200 dark:border-neutral-800 rounded-xl p-3 relative">
+      <button type="button" onclick="wizRemoveProj(${i})" class="absolute top-2 right-2 text-xs opacity-40 hover:opacity-100">✕</button>
+      <div class="grid grid-cols-2 gap-2">
+        <input value="${esc(p.name)}" onchange="wizProjs[${i}].name=this.value" placeholder="Project name" class="field w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-black"/>
+        <input value="${esc(p.url)}" onchange="wizProjs[${i}].url=this.value" placeholder="URL (optional)" class="field w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-black"/>
+      </div>
+      <input value="${esc(p.tech)}" onchange="wizProjs[${i}].tech=this.value" placeholder="Tech used (e.g. React, Node.js)" class="field mt-2 w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-black"/>
+      <textarea onchange="wizProjs[${i}].description=this.value" rows="2" placeholder="Brief description" class="field mt-2 w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-black resize-none">${esc(p.description)}</textarea>
+    </div>`).join('');
+}
+
+/* --- Certifications --- */
+function wizAddCert(){ wizCerts.push({name:'',org:'',start:''}); wizRenderCert(); }
+function wizRemoveCert(i){ wizCerts.splice(i,1); wizRenderCert(); }
+function wizRenderCert(){
+  $('wizCertList').innerHTML=wizCerts.map((c,i)=>`
+    <div class="flex gap-2 items-start relative">
+      <input value="${esc(c.name)}" onchange="wizCerts[${i}].name=this.value" placeholder="Certification name" class="field flex-1 border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-black"/>
+      <input value="${esc(c.org)}" onchange="wizCerts[${i}].org=this.value" placeholder="Org" class="field w-28 border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-black"/>
+      <input value="${esc(c.start)}" onchange="wizCerts[${i}].start=this.value" placeholder="Year" class="field w-20 border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-black"/>
+      <button type="button" onclick="wizRemoveCert(${i})" class="text-xs opacity-40 hover:opacity-100 mt-2">✕</button>
+    </div>`).join('');
+}
+
+/* --- Languages --- */
+function wizAddLang(){ wizLangs.push({lang:'',level:'Professional'}); wizRenderLang(); }
+function wizRemoveLang(i){ wizLangs.splice(i,1); wizRenderLang(); }
+function wizRenderLang(){
+  $('wizLangList').innerHTML=wizLangs.map((l,i)=>`
+    <div class="flex gap-2 items-center relative">
+      <input value="${esc(l.lang)}" onchange="wizLangs[${i}].lang=this.value" placeholder="e.g. English" class="field flex-1 border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-black"/>
+      <select onchange="wizLangs[${i}].level=this.value" class="field w-36 border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-black">
+        <option${l.level==='Native'?' selected':''}>Native</option><option${l.level==='Fluent'?' selected':''}>Fluent</option><option${l.level==='Professional'?' selected':''}>Professional</option><option${l.level==='Conversational'?' selected':''}>Conversational</option><option${l.level==='Basic'?' selected':''}>Basic</option>
+      </select>
+      <button type="button" onclick="wizRemoveLang(${i})" class="text-xs opacity-40 hover:opacity-100">✕</button>
+    </div>`).join('');
+}
+
+/* --- Templates --- */
 function renderNewTplGrid(){
   $('newTplGrid').innerHTML=TEMPLATES.map(t=>`
-    <button onclick="newTpl='${t.id}';renderNewTplGrid()" class="template-card ${newTpl===t.id?'active':''} border-2 border-neutral-200 dark:border-neutral-800 rounded-2xl p-3 text-left bg-white dark:bg-black">
+    <button type="button" onclick="newTpl='${t.id}';renderNewTplGrid()" class="template-card ${newTpl===t.id?'active':''} border-2 border-neutral-200 dark:border-neutral-800 rounded-2xl p-3 text-left bg-white dark:bg-black">
       <div class="bg-neutral-100 dark:bg-neutral-900 rounded-lg h-24 p-2.5 overflow-hidden">
         <div class="bg-white rounded shadow-sm h-full p-2" style="font-size:6px;line-height:1.7;color:#111">
           <div class="font-extrabold" style="font-size:8px">${t.id==='minimal'?'<div style="text-align:center">YOUR NAME</div>':'YOUR NAME'}</div>
@@ -1193,46 +1329,84 @@ function renderNewTplGrid(){
       <div class="mt-2 font-bold text-xs">${t.name}</div><div class="text-[10px] opacity-60 line-clamp-2">${t.desc}</div>
     </button>`).join('');
 }
+
+/* --- Navigation --- */
 function wizNext(){
-  if(wizStep===1){ if(!$('wizRole').value.trim()){toast('Enter your role or profession','warn');return;} wizShow(2); return; }
-  if(wizStep===2){ wizShow(3); return; }
-  if(wizStep===3){ if(!wizSkills.length){toast('Add at least one skill','warn');return;} wizShow(4); return; }
-  if(wizStep===4){ wizShow(5); return; }
-  if(wizStep===5){ wizBuild(); return; }
+  if(wizStep===1){ if(!$('wizName').value.trim()&&!$('wizEmail').value.trim()){toast('Add at least your name or email','warn');return;} wizShow(2); return; }
+  if(wizStep===2){ if(!$('wizRole').value.trim()){toast('Enter your role or profession','warn');return;} wizShow(3); return; }
+  if(wizStep===3){ wizShow(4); return; }
+  if(wizStep===4){
+    const filled=wizExp.filter(e=>e.title.trim()||e.company.trim());
+    if(!filled.length&&!wizSkills.length){toast('Add at least one role or skill','warn');return;}
+    wizShow(5); return;
+  }
+  if(wizStep===5){ if(!wizSkills.length){toast('Add at least one skill','warn');return;} wizShow(6); return; }
+  if(wizStep===6){ wizShow(7); return; }
+  if(wizStep===7){ wizShow(8); return; }
+  if(wizStep===8){ wizBuild(); return; }
 }
-function wizPrev(){ if(wizStep>1) wizShow(wizStep-1); }
+function wizPrev(){ if(wizStep>1)wizShow(wizStep-1); }
+
+/* --- Build --- */
 function wizBuild(){
+  const name=$('wizName').value.trim();
+  const email=$('wizEmail').value.trim();
+  const phone=$('wizPhone').value.trim();
+  const location=$('wizLocation').value.trim();
+  const linkedin=$('wizLinkedin').value.trim();
+  const github=$('wizGithub').value.trim();
+  const website=$('wizWebsite').value.trim();
   const role=$('wizRole').value.trim();
   const level=wizLevel;
   const skills=[...wizSkills];
+  const experience=wizExp.filter(e=>e.title.trim()||e.company.trim()).map(e=>({
+    title:e.title.trim(), company:e.company.trim(), start:e.start.trim(), end:e.end.trim(),
+    bullets:e.bullets.split('\n').map(b=>b.trim()).filter(Boolean)
+  }));
   const hasEdu=!$('wizSkipEdu').checked&&($('wizEduSchool').value.trim()||$('wizEduField').value.trim());
-  const education=hasEdu?{school:$('wizEduSchool').value.trim(),degree:$('wizEduDegree').value,field:$('wizEduField').value.trim(),year:$('wizEduStart').value.trim()}:null;
-  const extras=$('wizExtras').value.trim();
-  const name=$('wizResumeName').value.trim()||role+' CV';
-  wizShow(6);
+  const education=hasEdu?{school:$('wizEduSchool').value.trim(),degree:$('wizEduDegree').value,field:$('wizEduField').value.trim(),startYear:$('wizEduStart').value.trim(),endYear:$('wizEduEnd').value.trim()}:null;
+  const projects=wizProjs.filter(p=>p.name.trim()).map(p=>({name:p.name.trim(),description:p.description.trim(),tech:p.tech.trim(),url:p.url.trim()}));
+  const certifications=wizCerts.filter(c=>c.name.trim()).map(c=>({name:c.name.trim(),org:c.org.trim(),start:c.start.trim()}));
+  const languages=wizLangs.filter(l=>l.lang.trim()).map(l=>({lang:l.lang.trim(),level:l.level}));
+  const resumeName=$('wizResumeName').value.trim()||(name?name.split(' ')[0]+"'s "+role+' CV':role+' CV');
+  wizShow(9);
   $('wizStatus').textContent='Asking the AI…';
   (async()=>{
     let remote=null;
-    try{ remote=await aiViaBackend('/api/ai/build-resume/',{role,level,skills,education,extras}); }catch(e){}
+    try{ remote=await aiViaBackend('/api/ai/build-resume/',{role,level,skills,education,experience,projects,certifications,languages,personal:{name,email,phone,location,linkedin,github,website}}); }catch(e){}
     $('wizStatus').textContent='Filling in your resume…';
     await new Promise(res=>setTimeout(res,400));
-    const r=blankResume(DB.session,name,newTpl,false);
+    const r=blankResume(DB.session,resumeName,newTpl,false);
     if(remote&&remote.resume){
       const d=remote.resume;
       Object.assign(r.personal,d.personal||{});
+      r.personal.fullName=name||r.personal.fullName;
+      r.personal.email=email||r.personal.email;
+      r.personal.phone=phone||r.personal.phone;
+      r.personal.location=location||r.personal.location;
+      r.personal.linkedin=linkedin||r.personal.linkedin;
+      r.personal.github=github||r.personal.github;
+      r.personal.website=website||r.personal.website;
+      r.personal.title=d.personal?.title||((level!=='mid'?level.charAt(0).toUpperCase()+level.slice(1)+' ':'')+role);
       r.summary=d.summary||'';
       r.experience=(d.experience||[]).map(e=>({...e,id:uid(),bullets:e.bullets||[]}));
       r.education=(d.education||[]).map(e=>({...e,id:uid()}));
       r.skills=d.skills||r.skills;
       r.projects=(d.projects||[]).map(p=>({...p,id:uid()}));
       r.certifications=(d.certifications||[]).map(c=>({...c,id:uid()}));
-      r.languages=d.languages||[];
-      r.interests=d.interests||'';
+      r.languages=d.languages||languages;
       r.hidden=['volunteering','references'];
     } else {
-      r.personal.title=role; r.personal.fullName='';
+      r.personal.fullName=name; r.personal.email=email; r.personal.phone=phone;
+      r.personal.location=location; r.personal.linkedin=linkedin; r.personal.github=github; r.personal.website=website;
+      r.personal.title=(level!=='mid'?level.charAt(0).toUpperCase()+level.slice(1)+' ':'')+role;
       r.skills.technical=skills.slice(0,5); r.skills.tools=skills.slice(5,8);
       r.summary=`${level.charAt(0).toUpperCase()+level.slice(1)} ${role} with experience delivering quality results. Skilled in ${skills.slice(0,3).join(', ')}${skills.length>3?', and more':''}.`;
+      r.experience=experience.map(e=>({id:uid(),jobTitle:e.title,company:e.company,location:'',start:e.start,end:e.end,current:!e.end,description:'',bullets:e.bullets}));
+      if(education) r.education=[{id:uid(),institution:education.school,degree:education.degree,field:education.field,start:education.startYear,end:education.endYear}];
+      r.projects=projects.map(p=>({id:uid(),name:p.name,description:p.description,tech:p.tech.split(',').map(s=>s.trim()).filter(Boolean),url:p.url}));
+      r.certifications=certifications.map(c=>({id:uid(),name:c.name,org:c.org,start:c.start,end:'',credId:'',url:''}));
+      r.languages=languages;
     }
     DB.resumes.push(r); persist(); closeModal('modalNew');
     toast('Resume built ✓');
