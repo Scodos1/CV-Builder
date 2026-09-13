@@ -8,6 +8,7 @@
 <title>MONO — Resume Studio | Professional CV Builder</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>if(window.pdfjsLib){pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';}</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js"></script>
 <script>
 tailwind.config = {
@@ -1436,7 +1437,18 @@ async function handleUpload(e){
       for(let i=1;i<=pdf.numPages;i++){
         const page=await pdf.getPage(i);
         const content=await page.getTextContent();
-        pages.push(content.items.map(item=>item.str).join(' '));
+        // Build lines using Y coordinates and hasEOL to reconstruct proper line breaks
+        const items=content.items;
+        let lines=[]; let curLine=[];
+        for(let j=0;j<items.length;j++){
+          const item=items[j];
+          curLine.push(item.str);
+          if(item.hasEOL||(j<items.length-1 && Math.abs(items[j+1].transform[5]-item.transform[5])>2)){
+            lines.push(curLine.join(' ')); curLine=[];
+          }
+        }
+        if(curLine.length) lines.push(curLine.join(' '));
+        pages.push(lines.join('\n'));
       }
       text=pages.join('\n');
     } else if(ext==='docx'||ext==='doc'){
@@ -1447,6 +1459,7 @@ async function handleUpload(e){
       toast('Unsupported file type: .'+ext,'warn'); return;
     }
   }catch(err){ toast('Failed to read file: '+err.message,'warn'); return; }
+  text=text.replace(/\s{3,}/g,'  ').replace(/\n{3,}/g,'\n\n').trim();
   if(!text.trim()){toast('Could not extract text from file','warn'); return;}
   toast('Parsing resume with AI…','info');
   let remote=null;
