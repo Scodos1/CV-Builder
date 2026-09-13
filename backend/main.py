@@ -308,7 +308,7 @@ SYSTEM_BUILDER = ("You are an expert resume writer. Generate realistic, tailored
 def _rule_polish(t: str, mode: str = "polish") -> str:
     t = " ".join((t or "").split())
     if not t: return t
-    # Strong verb replacements (case-insensitive, whole phrase)
+    orig = t
     repl = [
         (r"\bworked on\b", "Developed"), (r"\bhelped\b", "Collaborated to deliver"),
         (r"\bresponsible for\b", "Led"), (r"\bmade\b", "Built"),
@@ -318,10 +318,13 @@ def _rule_polish(t: str, mode: str = "polish") -> str:
         (r"\bwas in charge of\b", "Spearheaded"), (r"\bworked with\b", "Partnered with"),
         (r"\bassisted\b", "Supported"), (r"\bparticipated in\b", "Contributed to"),
         (r"\bwas responsible for\b", "Led"), (r"\bdid work on\b", "Developed"),
+        (r"\bcompleted\b", "Executed"), (r"\bperformed\b", "Executed"),
+        (r"\bset up\b", "Established"), (r"\bcame up with\b", "Developed"),
+        (r"\bran\b", "Operated"), (r"\bput together\b", "Assembled"),
+        (r"\bfigure out\b", "Resolved"), (r"\bmake sure\b", "Ensure"),
     ]
     for pat, rep in repl:
         t = re.sub(pat, rep, t, flags=re.I)
-    # Remove filler words
     t = re.sub(r"\bvery\b", "", t, flags=re.I)
     t = re.sub(r"\bjust\b", "", t, flags=re.I)
     t = re.sub(r"\breally\b", "", t, flags=re.I)
@@ -330,28 +333,29 @@ def _rule_polish(t: str, mode: str = "polish") -> str:
     t = re.sub(r"\ba lot of\b", "significant", t, flags=re.I)
     t = re.sub(r"\bvarious\b", "multiple", t, flags=re.I)
     t = re.sub(r"\butilized\b", "Leveraged", t, flags=re.I)
-    # Concise mode
     if mode == "concise":
         t = re.sub(r"\bin order to\b", "to", t, flags=re.I)
         t = re.sub(r"\bdue to the fact that\b", "because", t, flags=re.I)
-        t = re.sub(r"\bat this point in time\b", "currently", t, flags=re.I)
         w = t.split()
         if len(w) > 22: t = " ".join(w[:22]) + "."
-    # Pro mode: ensure starts with action verb
     if mode == "pro":
         ACTION = ["Developed", "Designed", "Engineered", "Led", "Delivered", "Built",
                   "Launched", "Optimized", "Automated", "Streamlined", "Implemented", "Drove", "Improved", "Shipped"]
         if not any(t.startswith(a) for a in ACTION):
-            # Try to prepend a strong verb
             for weak in ["I ", "my ", "the ", "a "]:
                 if t.lower().startswith(weak.lower()):
                     t = "Delivered " + t[len(weak):]
                     break
-    # Clean up
     t = re.sub(r"\bi\b", "I", t)
     t = re.sub(r"\s{2,}", " ", t).strip()
     if t and not t[0].isupper(): t = t[0].upper() + t[1:]
     if t and t[-1] not in ".!?": t += "."
+    # If nothing changed, force a restructuring
+    if t == orig:
+        base = re.sub(r"[.!?]+$", "", t).strip()
+        if not any(base.startswith(a) for a in ["Developed","Designed","Led","Built","Delivered","Engineered","Implemented","Optimized","Shipped","Automated","Streamlined","Drove","Improved","Launched"]):
+            base = "Successfully delivered " + base[0].lower() + base[1:]
+        t = base + "."
     return t
 
 def _llm(prompt: str, system: str = "", max_tokens: int = 400) -> Optional[str]:
