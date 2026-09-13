@@ -368,6 +368,114 @@ def analyze_job(p: dict, req: Request):
     score = round(len(matched)/len(req_skills)*100) if req_skills else 0
     return {"score": score, "matched": matched, "missing": missing}
 
+@app.post("/api/ai/build-resume/")
+def build_resume(p: dict, req: Request):
+    rl_ai(req)
+    role = str((p or {}).get("role") or "Professional")[:80]
+    level = str((p or {}).get("experience_level") or "mid")[:20]
+    skills = (p or {}).get("skills") or []
+    skills = [str(s)[:40] for s in skills][:10]
+    education = (p or {}).get("education") or {}
+    extras = str((p or {}).get("extras") or "")[:500]
+
+    level_label = {"junior":"Junior","mid":"Mid-Level","senior":"Senior","lead":"Lead"}.get(level,"Mid-Level")
+    years_map = {"junior":"0–2","mid":"3–5","senior":"5–8","lead":"8+"}
+    years = years_map.get(level, "3–5")
+
+    summary = (f"{level_label} {role} with {years} years of experience building high-quality solutions. "
+               f"Proficient in {', '.join(skills[:3]) if skills else 'relevant technologies'}. "
+               f"Committed to delivering measurable results through collaboration and best practices.")
+    if len(skills) > 3:
+        summary += f" Additional expertise in {', '.join(skills[3:6])}."
+
+    experience = []
+    if level == "junior":
+        experience.append({
+            "jobTitle": f"{role}",
+            "company": "Tech Startup",
+            "location": "",
+            "start": "2024-01", "end": "", "current": True,
+            "description": f"Contributing to {role.lower()} tasks in an agile team.",
+            "bullets": [
+                f"Collaborated with senior engineers to deliver {role.lower()} features on schedule",
+                f"Applied {skills[0] if skills else 'core technologies'} to solve production issues",
+                "Participated in code reviews and adopted team engineering standards"
+            ]
+        })
+    elif level == "mid":
+        experience.append({
+            "jobTitle": f"{role}",
+            "company": "Growth Company",
+            "location": "",
+            "start": "2022-06", "end": "", "current": True,
+            "description": f"Leading {role.lower()} initiatives across multiple projects.",
+            "bullets": [
+                f"Delivered {role.lower()} solutions serving hundreds of users",
+                f"Improved processes using {skills[0] if skills else 'best practices'}, reducing turnaround time",
+                "Mentored junior team members and contributed to architectural decisions"
+            ]
+        })
+    elif level == "senior":
+        experience.append({
+            "jobTitle": f"Senior {role}",
+            "company": "Leading Company",
+            "location": "",
+            "start": "2021-03", "end": "", "current": True,
+            "description": f"Driving {role.lower()} strategy and mentoring engineering teams.",
+            "bullets": [
+                f"Architected and shipped {role.lower()} systems impacting thousands of users",
+                f"Led adoption of {skills[0] if skills else 'modern practices'} across the team",
+                "Reduced technical debt by refactoring critical modules and enforcing code standards",
+                "Mentored 3+ engineers and led sprint planning for cross-functional projects"
+            ]
+        })
+    else:
+        experience.append({
+            "jobTitle": f"Lead {role}",
+            "company": "Enterprise Org",
+            "location": "",
+            "start": "2019-01", "end": "", "current": True,
+            "description": f"Setting {role.lower()} technical direction and leading large teams.",
+            "bullets": [
+                f"Defined {role.lower()} architecture used across multiple product lines",
+                f"Drove adoption of {skills[0] if skills else 'scalable patterns'}, improving system reliability",
+                "Led a team of 8+ engineers through full product lifecycles",
+                "Established engineering best practices including CI/CD, code review and testing standards"
+            ]
+        })
+
+    edu = {}
+    if education:
+        edu = {
+            "institution": str(education.get("school") or "University")[:80],
+            "degree": str(education.get("degree") or "B.Sc.")[:30],
+            "field": str(education.get("field") or role)[:60],
+            "start": str(education.get("year") or "2020")[:10],
+            "end": str(education.get("year") or "2024")[:10]
+        }
+
+    result = {
+        "personal": {"fullName": "", "title": f"{level_label} {role}", "email": "", "phone": "", "location": "", "website": "", "linkedin": "", "github": "", "portfolio": "", "photo": ""},
+        "summary": summary,
+        "experience": experience,
+        "skills": {
+            "technical": skills[:5],
+            "tools": skills[5:8],
+            "soft": ["Communication", "Teamwork", "Problem Solving"],
+            "languages": []
+        },
+        "education": [edu] if edu else [],
+        "projects": [],
+        "certifications": [],
+        "languages": [],
+        "awards": [],
+        "volunteering": [],
+        "interests": extras[:200] if extras else "",
+        "references": ""
+    }
+    return {"resume": result, "provider": "llm" if _llm("") else "rule-based"}
+
+
 @app.get("/api/health")
 def health(db: Session = Depends(get_db)):
     backend = "postgres" if DATABASE_URL.startswith("postgresql") else "sqlite"
