@@ -376,7 +376,9 @@ def health(db: Session = Depends(get_db)):
         db_ok = True
     except Exception:
         db_ok = False
-    return {"ok": db_ok, "ai": "llm" if os.getenv("OPENAI_API_KEY") else "rule-based", "db": backend, "env": ENV}
+    if not db_ok:
+        raise HTTPException(503, "Database unreachable")
+    return {"ok": True, "ai": "llm" if os.getenv("OPENAI_API_KEY") else "rule-based", "db": backend, "env": ENV}
 
 @app.get("/")
 def root(): return {"ok": True, "docs": "/docs"}

@@ -17,6 +17,9 @@ from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 BASE_DIR = Path(__file__).parent
 DEFAULT_SQLITE = f"sqlite:///{(BASE_DIR / 'mono.db').as_posix()}"
 DATABASE_URL = os.getenv("DATABASE_URL", DEFAULT_SQLITE)
+if DATABASE_URL.startswith("postgres://"):
+    # Render/Heroku-style scheme -> SQLAlchemy dialect (needs psycopg2-binary)
+    DATABASE_URL = "postgresql+psycopg2://" + DATABASE_URL[len("postgres://"):]
 
 connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
 engine = create_engine(DATABASE_URL, pool_pre_ping=True, connect_args=connect_args)

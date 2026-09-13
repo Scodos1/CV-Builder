@@ -11,7 +11,9 @@ services:
       - key: MONO_JWT_SECRET
         sync: false
       - key: DATABASE_URL
-        sync: false
+        fromDatabase:
+          name: mono-pg
+          property: connectionString
       - key: MONO_CORS_ORIGINS
         value: https://your-frontend-domain.com
 databases:

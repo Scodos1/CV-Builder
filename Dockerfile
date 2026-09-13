@@ -12,4 +12,5 @@ COPY index.html /static/index.html
 
 EXPOSE 8000
 # DATABASE_URL, MONO_JWT_SECRET, MONO_CORS_ORIGINS come from the platform env.
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+# Respect $PORT (Render injects it, default 10000); fall back to 8000 locally.
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 2"]
