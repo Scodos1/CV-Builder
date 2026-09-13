@@ -888,6 +888,31 @@ input[type=range]{accent-color:#111}
   </div>
 </div>
 
+<!-- Upload Preview Modal -->
+<div id="uploadPreviewModal" class="hidden fixed inset-0 z-[200]">
+  <div class="absolute inset-0 bg-black/50 modal-bg" onclick="closeUploadPreview()"></div>
+  <div class="absolute inset-4 md:inset-8 lg:inset-16 bg-white dark:bg-neutral-950 rounded-2xl border border-neutral-200 dark:border-neutral-800 flex flex-col shadow-2xl">
+    <div class="p-5 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
+      <div>
+        <div class="text-xs font-mono uppercase tracking-[.2em] opacity-50">Extracted Text</div>
+        <h3 class="text-lg font-extrabold mt-1">Review before parsing</h3>
+        <p class="text-xs opacity-60 mt-1">Edit the text below if something was missed, then click Parse.</p>
+      </div>
+      <button onclick="closeUploadPreview()" class="w-9 h-9 rounded-full border border-neutral-300 dark:border-neutral-700 flex-shrink-0">✕</button>
+    </div>
+    <div class="flex-1 p-5 overflow-hidden flex flex-col">
+      <textarea id="uploadPreviewText" class="flex-1 w-full resize-none border border-neutral-200 dark:border-neutral-800 rounded-xl p-4 text-sm font-mono bg-neutral-50 dark:bg-neutral-900 focus:ring-2 focus:ring-black dark:focus:ring-white outline-none" placeholder="Extracted text will appear here..."></textarea>
+    </div>
+    <div class="p-5 border-t border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
+      <div class="text-xs opacity-50" id="uploadPreviewFile"></div>
+      <div class="flex gap-3">
+        <button onclick="closeUploadPreview()" class="px-5 py-2 text-sm rounded-full border border-neutral-300 dark:border-neutral-700 font-bold hover:bg-neutral-100 dark:hover:bg-neutral-900 transition">Cancel</button>
+        <button onclick="confirmUploadParse()" class="px-6 py-2 text-sm rounded-full bg-black text-white dark:bg-white dark:text-black font-bold hover:opacity-80 btn-press">Parse & Import →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="print-root"></div>
 
 <script>
@@ -1436,21 +1461,40 @@ async function handleUpload(e){
       const pages=[];
       for(let i=1;i<=pdf.numPages;i++){
         const page=await pdf.getPage(i);
+        const vp=page.getViewport({scale:1});
         const content=await page.getTextContent();
-        // Build lines using Y coordinates and hasEOL to reconstruct proper line breaks
-        const items=content.items;
-        let lines=[]; let curLine=[];
-        for(let j=0;j<items.length;j++){
-          const item=items[j];
-          curLine.push(item.str);
-          if(item.hasEOL||(j<items.length-1 && Math.abs(items[j+1].transform[5]-item.transform[5])>2)){
-            lines.push(curLine.join(' ')); curLine=[];
+        const items=content.items.filter(it=>it.str&&it.str.trim());
+        // Group items by Y coordinate (within 3px tolerance) to reconstruct lines
+        const rows={};
+        items.forEach(it=>{
+          const y=Math.round(it.transform[5]);
+          // Find existing row within tolerance or create new
+          let key=null;
+          for(const k of Object.keys(rows)){
+            if(Math.abs(k-y)<=3){key=k;break;}
           }
-        }
-        if(curLine.length) lines.push(curLine.join(' '));
+          if(key===null) key=y;
+          if(!rows[key]) rows[key]=[];
+          rows[key].push({x:it.transform[4], str:it.str, hasEOL:it.hasEOL});
+        });
+        // Sort rows by Y descending (PDF Y is bottom-up), sort items within row by X
+        const sortedKeys=Object.keys(rows).map(Number).sort((a,b)=>b-a);
+        const lines=sortedKeys.map(k=>{
+          const row=rows[k].sort((a,b)=>a.x-b.x);
+          let line='';
+          let lastX=0;
+          row.forEach((item,idx)=>{
+            // Add space if there's a gap between items (more than ~8px or 1 char width)
+            if(idx>0&&item.x-lastX>8) line+='  ';
+            else if(idx>0&&!line.endsWith(' ')&&!item.str.startsWith(' ')) line+=' ';
+            line+=item.str;
+            lastX=item.x+item.str.length*5; // approximate width
+          });
+          return line.trim();
+        }).filter(l=>l);
         pages.push(lines.join('\n'));
       }
-      text=pages.join('\n');
+      text=pages.join('\n\n');
     } else if(ext==='docx'||ext==='doc'){
       const buf=await file.arrayBuffer();
       const result=await mammoth.extractRawText({arrayBuffer:buf});
@@ -1461,11 +1505,23 @@ async function handleUpload(e){
   }catch(err){ toast('Failed to read file: '+err.message,'warn'); return; }
   text=text.replace(/\s{3,}/g,'  ').replace(/\n{3,}/g,'\n\n').trim();
   if(!text.trim()){toast('Could not extract text from file','warn'); return;}
+  // Store extracted text and show preview
+  window._pendingUploadText=text;
+  window._pendingUploadName=file.name.replace(/\.[^.]+$/,'')||'Uploaded Resume';
+  $('uploadPreviewText').value=text;
+  $('uploadPreviewFile').textContent=file.name+' — '+text.split(/\s+/).length+' words extracted';
+  $('uploadPreviewModal').classList.remove('hidden');
+}
+function closeUploadPreview(){ $('uploadPreviewModal').classList.add('hidden'); window._pendingUploadText=''; }
+async function confirmUploadParse(){
+  const text=window._pendingUploadText;
+  const name=window._pendingUploadName||'Uploaded Resume';
+  if(!text){ closeUploadPreview(); return; }
+  closeUploadPreview();
   toast('Parsing resume with AI…','info');
   let remote=null;
   try{ remote=await aiViaBackend('/api/ai/parse-resume/',{text}); }catch(err){}
   const data=(remote&&remote.resume)?remote.resume:null;
-  const name=file.name.replace(/\.[^.]+$/,'')||'Uploaded Resume';
   const r=blankResume(DB.session,name,'modern',false);
   if(data){
     if(data.personal) Object.assign(r.personal,data.personal);
@@ -1478,7 +1534,6 @@ async function handleUpload(e){
     if(data.languages) r.languages=data.languages;
     r.hidden=['volunteering','references'];
   } else {
-    // Rule-based: just put raw text as summary
     r.summary=text.slice(0,1000);
   }
   DB.resumes.push(r); persist();
