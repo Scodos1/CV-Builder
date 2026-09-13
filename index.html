@@ -1202,7 +1202,7 @@ let renameId=null;
 function askRename(id){ const r=DB.resumes.find(x=>x.id===id); renameId=id; $('renameInput').value=r.name; openModal('modalRename'); }
 function confirmRename(){ const r=DB.resumes.find(x=>x.id===renameId); const v=$('renameInput').value.trim(); if(v){r.name=v;r.updatedAt=Date.now();persist();renderDashboard();toast('Renamed to "'+v+'" ✓');} closeModal('modalRename'); }
 function duplicateResume(id){ const src=DB.resumes.find(x=>x.id===id); if(!src||src.ownerId!==DB.session)return; const c=JSON.parse(JSON.stringify(src)); c.id=uid(); c.name=src.name+' (Copy)'; c.createdAt=c.updatedAt=Date.now(); DB.resumes.push(c); persist(); renderDashboard(); toast('Duplicated ✓ — POST /duplicate/'); }
-function deleteResume(id){ const r=DB.resumes.find(x=>x.id===id); if(!confirm('Delete "'+r.name+'"? This cannot be undone.'))return; DB.resumes=DB.resumes.filter(x=>x.id!==id); persist(); renderDashboard(); toast('Resume deleted','info'); }
+function deleteResume(id){ const r=DB.resumes.find(x=>x.id===id); if(!r)return; if(!confirm('Delete "'+r.name+'"? This cannot be undone.'))return; DB.resumes=DB.resumes.filter(x=>x.id!==id); persist(); renderDashboard(); toast('Resume deleted','info'); if(API_ONLINE) api('/api/resumes/'+id+'/',{method:'DELETE'}).catch(()=>{}); }
 function downloadFromDash(id){ openBuilder(id); setTimeout(exportPDF,400); }
 
 /* ---------- New resume wizard ---------- */
