@@ -604,16 +604,16 @@ input[type=range]{accent-color:#111}
       <h3 class="text-2xl md:text-3xl font-extrabold tracking-tight">Your experience level</h3>
       <p class="text-sm opacity-60 mt-1">This adjusts the tone, bullet depth and achievements.</p>
       <div class="mt-6 grid grid-cols-2 gap-3">
-        <button onclick="wizSetLevel(this,'junior')" class="wiz-level border-2 border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 text-left hover:border-black dark:hover:border-white transition">
+        <button type="button" onclick="wizSetLevel(this,'junior')" class="wiz-level border-2 border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 text-left hover:border-black dark:hover:border-white transition">
           <div class="text-lg font-extrabold">Junior</div><div class="text-xs opacity-60 mt-1">0–2 years · entry level</div>
         </button>
-        <button onclick="wizSetLevel(this,'mid')" class="wiz-level border-2 border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 text-left hover:border-black dark:hover:border-white transition">
+        <button type="button" onclick="wizSetLevel(this,'mid')" class="wiz-level border-2 border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 text-left hover:border-black dark:hover:border-white transition">
           <div class="text-lg font-extrabold">Mid-Level</div><div class="text-xs opacity-60 mt-1">3–5 years · independent</div>
         </button>
-        <button onclick="wizSetLevel(this,'senior')" class="wiz-level border-2 border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 text-left hover:border-black dark:hover:border-white transition">
+        <button type="button" onclick="wizSetLevel(this,'senior')" class="wiz-level border-2 border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 text-left hover:border-black dark:hover:border-white transition">
           <div class="text-lg font-extrabold">Senior</div><div class="text-xs opacity-60 mt-1">5–8 years · leading work</div>
         </button>
-        <button onclick="wizSetLevel(this,'lead')" class="wiz-level border-2 border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 text-left hover:border-black dark:hover:border-white transition">
+        <button type="button" onclick="wizSetLevel(this,'lead')" class="wiz-level border-2 border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 text-left hover:border-black dark:hover:border-white transition">
           <div class="text-lg font-extrabold">Lead / Principal</div><div class="text-xs opacity-60 mt-1">8+ years · setting direction</div>
         </button>
       </div>
@@ -676,8 +676,8 @@ input[type=range]{accent-color:#111}
 
     <!-- Navigation -->
     <div id="wizNav" class="mt-8 flex gap-2">
-      <button onclick="wizPrev()" id="wizBack" class="hidden flex-1 py-3.5 border border-neutral-300 dark:border-neutral-700 rounded-full font-bold text-sm">← Back</button>
-      <button onclick="wizNext()" id="wizNextBtn" class="flex-[2] py-3.5 bg-black text-white dark:bg-white dark:text-black rounded-full font-bold text-sm hover:opacity-80">Continue →</button>
+      <button type="button" onclick="wizPrev()" id="wizBack" class="hidden flex-1 py-3.5 border border-neutral-300 dark:border-neutral-700 rounded-full font-bold text-sm">← Back</button>
+      <button type="button" onclick="wizNext()" id="wizNextBtn" class="flex-[2] py-3.5 bg-black text-white dark:bg-white dark:text-black rounded-full font-bold text-sm hover:opacity-80">Continue →</button>
     </div>
   </div>
 </div>
@@ -1166,8 +1166,9 @@ function wizShow(n){
   if(n===5){ $('wizResumeName').value=$('wizRole').value?$('wizRole').value+' CV':''; }
 }
 function wizSetLevel(btn,lvl){
-  document.querySelectorAll('.wiz-level').forEach(b=>b.classList.remove('border-black','dark:border-white'));
+  document.querySelectorAll('.wiz-level').forEach(b=>{b.classList.remove('border-black','dark:border-white');b.style.pointerEvents='auto';});
   btn.classList.add('border-black','dark:border-white'); wizLevel=lvl;
+  setTimeout(()=>wizShow(3),300);
 }
 function wizAddSkill(){
   const v=$('wizSkillInput').value.trim(); if(!v||wizSkills.length>=10||wizSkills.includes(v))return;
@@ -1175,7 +1176,7 @@ function wizAddSkill(){
 }
 function wizRemoveSkill(i){ wizSkills.splice(i,1); wizRenderTags(); }
 function wizRenderTags(){
-  $('wizSkillTags').innerHTML=wizSkills.map((s,i)=>`<button onclick="wizRemoveSkill(${i})" class="px-3 py-1.5 rounded-full bg-black text-white dark:bg-white dark:text-black text-xs font-bold hover:opacity-80">${esc(s)} ×</button>`).join('');
+  $('wizSkillTags').innerHTML=wizSkills.map((s,i)=>`        <button type="button" onclick="wizRemoveSkill(${i})" class="px-3 py-1.5 rounded-full bg-black text-white dark:bg-white dark:text-black text-xs font-bold hover:opacity-80">${esc(s)} ×</button>`).join('');
 }
 function renderNewTplGrid(){
   $('newTplGrid').innerHTML=TEMPLATES.map(t=>`
