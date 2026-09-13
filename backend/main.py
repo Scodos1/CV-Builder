@@ -293,9 +293,15 @@ def export_post(rid: str, p: dict = None, u: User = Depends(auth_user), db: Sess
     return _export(rid, u, db, fmt)
 
 # ---------- AI (real LLM when key set, else guarded rule-based fallback) ----------
-AI_MODEL = os.getenv("MONO_AI_MODEL", "gpt-4o-mini")
+GROQ_KEY = os.getenv("GROQ_API_KEY", "")
+OPENAI_KEY = os.getenv("OPENAI_API_KEY", "")
+AI_PROVIDER = "groq" if GROQ_KEY else ("openai" if OPENAI_KEY else "rule-based")
+AI_MODEL = os.getenv("MONO_AI_MODEL", "llama-3.1-8b-instant")  # Groq free model
 SYSTEM_GUARD = ("You refine resume wording only. Never invent employers, dates, metrics, "
                 "qualifications or skills. Keep facts identical; improve clarity, verbs and conciseness.")
+SYSTEM_BUILDER = ("You are an expert resume writer. Generate realistic, tailored resume content "
+                  "for the given role and level. Use professional language. Never invent specific "
+                  "company names unless provided. Use bullet points that start with strong verbs.")
 
 def _rule_polish(t: str, mode: str = "polish") -> str:
     t = " ".join((t or "").split())
@@ -311,19 +317,33 @@ def _rule_polish(t: str, mode: str = "polish") -> str:
     if t and t[-1] not in ".!?": t += "."
     return t
 
-def _llm(prompt: str) -> Optional[str]:
-    key = os.getenv("OPENAI_API_KEY", "")
-    if not key: return None
-    try:
-        from openai import OpenAI  # pip install openai (optional)
-        c = OpenAI(api_key=key)
-        r = c.chat.completions.create(model=AI_MODEL, messages=[
-            {"role": "system", "content": SYSTEM_GUARD},
-            {"role": "user", "content": prompt[:4000]}],
-            temperature=0.4, max_tokens=400)
-        return (r.choices[0].message.content or "").strip()
-    except Exception:
-        return None
+def _llm(prompt: str, system: str = "", max_tokens: int = 400) -> Optional[str]:
+    sys_msg = system or SYSTEM_GUARD
+    # Try Groq first (free)
+    if GROQ_KEY:
+        try:
+            from groq import Groq
+            c = Groq(api_key=GROQ_KEY)
+            r = c.chat.completions.create(model=AI_MODEL, messages=[
+                {"role": "system", "content": sys_msg},
+                {"role": "user", "content": prompt[:4000]}],
+                temperature=0.4, max_tokens=max_tokens)
+            return (r.choices[0].message.content or "").strip()
+        except Exception:
+            pass
+    # Fallback to OpenAI
+    if OPENAI_KEY:
+        try:
+            from openai import OpenAI
+            c = OpenAI(api_key=OPENAI_KEY)
+            r = c.chat.completions.create(model="gpt-4o-mini", messages=[
+                {"role": "system", "content": sys_msg},
+                {"role": "user", "content": prompt[:4000]}],
+                temperature=0.4, max_tokens=max_tokens)
+            return (r.choices[0].message.content or "").strip()
+        except Exception:
+            pass
+    return None
 
 @app.post("/api/ai/improve-summary/")
 def improve_summary(p: dict, req: Request):
@@ -382,6 +402,68 @@ def build_resume(p: dict, req: Request):
     years_map = {"junior":"0–2","mid":"3–5","senior":"5–8","lead":"8+"}
     years = years_map.get(level, "3–5")
 
+    # Try LLM for richer content
+    edu_str = ""
+    if education:
+        edu_str = f"\nEducation: {education.get('degree','')} in {education.get('field','')} from {education.get('school','')} ({education.get('year','')})"
+    prompt = (f"Build resume content for a {level_label} {role} ({years} experience).\n"
+              f"Skills: {', '.join(skills)}\n{edu_str}\n"
+              f"Extras: {extras}\n\n"
+              f"Return ONLY valid JSON with these keys: summary (2-3 sentences), "
+              f"experience (array of 1-2 objects with jobTitle, company, description, bullets (array of 3-4 strings)), "
+              f"skills object with technical/tools/soft arrays. "
+              f"Companies should be realistic but generic (e.g. 'Tech Startup', 'Growth Company'). "
+              f"Bullets must start with action verbs and include quantified impact where possible.")
+    llm_out = _llm(prompt, system=SYSTEM_BUILDER, max_tokens=800)
+
+    provider = "rule-based"
+    if llm_out:
+        try:
+            import json as _json
+            # Try to extract JSON from LLM response
+            match = re.search(r'\{[\s\S]*\}', llm_out)
+            if match:
+                data = _json.loads(match.group())
+                provider = AI_PROVIDER
+                summary = data.get("summary", "")
+                experience = data.get("experience", [])
+                llm_skills = data.get("skills", {})
+                # Normalize experience
+                for e in experience:
+                    e.setdefault("id", "")
+                    e.setdefault("location", "")
+                    e.setdefault("start", "")
+                    e.setdefault("end", "")
+                    e.setdefault("current", False)
+                    e.setdefault("bullets", [])
+                # Normalize skills
+                if llm_skills:
+                    skills_obj = {
+                        "technical": llm_skills.get("technical", skills[:5]),
+                        "tools": llm_skills.get("tools", skills[5:8]),
+                        "soft": llm_skills.get("soft", ["Communication", "Teamwork", "Problem Solving"]),
+                        "languages": []
+                    }
+                else:
+                    skills_obj = {"technical": skills[:5], "tools": skills[5:8], "soft": ["Communication", "Teamwork", "Problem Solving"], "languages": []}
+                # Education
+                edu_list = []
+                if education:
+                    edu_list = [{"institution": str(education.get("school","University"))[:80], "degree": str(education.get("degree","B.Sc."))[:30], "field": str(education.get("field",role))[:60], "start": str(education.get("year","2020"))[:10], "end": str(education.get("year","2024"))[:10]}]
+                result = {
+                    "personal": {"fullName": "", "title": f"{level_label} {role}", "email": "", "phone": "", "location": "", "website": "", "linkedin": "", "github": "", "portfolio": "", "photo": ""},
+                    "summary": summary,
+                    "experience": experience[:2],
+                    "skills": skills_obj,
+                    "education": edu_list,
+                    "projects": [], "certifications": [], "languages": [], "awards": [],
+                    "volunteering": [], "interests": extras[:200] if extras else "", "references": ""
+                }
+                return {"resume": result, "provider": provider}
+        except Exception:
+            pass  # Fall through to rule-based
+
+    # Rule-based fallback
     summary = (f"{level_label} {role} with {years} years of experience building high-quality solutions. "
                f"Proficient in {', '.join(skills[:3]) if skills else 'relevant technologies'}. "
                f"Committed to delivering measurable results through collaboration and best practices.")
@@ -391,9 +473,7 @@ def build_resume(p: dict, req: Request):
     experience = []
     if level == "junior":
         experience.append({
-            "jobTitle": f"{role}",
-            "company": "Tech Startup",
-            "location": "",
+            "jobTitle": f"{role}", "company": "Tech Startup", "location": "",
             "start": "2024-01", "end": "", "current": True,
             "description": f"Contributing to {role.lower()} tasks in an agile team.",
             "bullets": [
@@ -404,9 +484,7 @@ def build_resume(p: dict, req: Request):
         })
     elif level == "mid":
         experience.append({
-            "jobTitle": f"{role}",
-            "company": "Growth Company",
-            "location": "",
+            "jobTitle": f"{role}", "company": "Growth Company", "location": "",
             "start": "2022-06", "end": "", "current": True,
             "description": f"Leading {role.lower()} initiatives across multiple projects.",
             "bullets": [
@@ -417,9 +495,7 @@ def build_resume(p: dict, req: Request):
         })
     elif level == "senior":
         experience.append({
-            "jobTitle": f"Senior {role}",
-            "company": "Leading Company",
-            "location": "",
+            "jobTitle": f"Senior {role}", "company": "Leading Company", "location": "",
             "start": "2021-03", "end": "", "current": True,
             "description": f"Driving {role.lower()} strategy and mentoring engineering teams.",
             "bullets": [
@@ -431,9 +507,7 @@ def build_resume(p: dict, req: Request):
         })
     else:
         experience.append({
-            "jobTitle": f"Lead {role}",
-            "company": "Enterprise Org",
-            "location": "",
+            "jobTitle": f"Lead {role}", "company": "Enterprise Org", "location": "",
             "start": "2019-01", "end": "", "current": True,
             "description": f"Setting {role.lower()} technical direction and leading large teams.",
             "bullets": [
@@ -465,15 +539,10 @@ def build_resume(p: dict, req: Request):
             "languages": []
         },
         "education": [edu] if edu else [],
-        "projects": [],
-        "certifications": [],
-        "languages": [],
-        "awards": [],
-        "volunteering": [],
-        "interests": extras[:200] if extras else "",
-        "references": ""
+        "projects": [], "certifications": [], "languages": [], "awards": [],
+        "volunteering": [], "interests": extras[:200] if extras else "", "references": ""
     }
-    return {"resume": result, "provider": "llm" if _llm("") else "rule-based"}
+    return {"resume": result, "provider": provider}
 
 
 @app.get("/api/health")
@@ -486,7 +555,7 @@ def health(db: Session = Depends(get_db)):
         db_ok = False
     if not db_ok:
         raise HTTPException(503, "Database unreachable")
-    return {"ok": True, "ai": "llm" if os.getenv("OPENAI_API_KEY") else "rule-based", "db": backend, "env": ENV}
+    return {"ok": True, "ai": AI_PROVIDER, "db": backend, "env": ENV}
 
 @app.get("/")
 def root(): return {"ok": True, "docs": "/docs"}
