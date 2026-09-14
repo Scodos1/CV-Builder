@@ -1115,7 +1115,8 @@ const TEMPLATES = [
   {id:'modern',name:'Modern',desc:'Sidebar + accent bar. Confident & current.',badge:'POPULAR'},
   {id:'minimal',name:'Minimal',desc:'Centered, airy, typographic calm.',badge:'CLEAN'},
   {id:'professional',name:'Professional',desc:'Bold header band. Corporate-ready.',badge:'CLASSIC'},
-  {id:'ats',name:'ATS-Friendly',desc:'Zero graphics. Maximum parseability.',badge:'SAFE'}
+  {id:'ats',name:'ATS-Friendly',desc:'Zero graphics. Maximum parseability.',badge:'SAFE'},
+  {id:'uploaded',name:'Uploaded',desc:'Show your original PDF as-is.',badge:'ORIGINAL'}
 ];
 const ACCENTS = ['#0A0A0A','#1E3A5F','#1B4D3E','#7C2D2D','#4338CA','#0F766E','#92400E'];
 const FONTS = {Inter:"'Inter',sans-serif",Georgia:"Georgia,'Times New Roman',serif",Merriweather:"'Merriweather',Georgia,serif",Lora:"'Lora',Georgia,serif",Playfair:"'Playfair Display',Georgia,serif",Mono:"'JetBrains Mono',monospace"};
@@ -1129,7 +1130,7 @@ function blankResume(ownerId,name,template,withSample){
     sectionOrder:[...DEFAULT_ORDER], hidden:[],
     personal:{fullName:'',title:'',email:'',phone:'',location:'',website:'',linkedin:'',github:'',portfolio:'',photo:''},
     summary:'', experience:[], education:[], skills:{technical:[],tools:[],soft:[],languages:[]}, projects:[], certifications:[],
-    languages:[], awards:[], volunteering:[], interests:'', references:''
+    languages:[], awards:[], volunteering:[], interests:'', references:'', pdfData:''
   };
   if(withSample) fillSample(r);
   return r;
@@ -1508,11 +1509,20 @@ async function handleUpload(e){
   // Store extracted text and show preview
   window._pendingUploadText=text;
   window._pendingUploadName=file.name.replace(/\.[^.]+$/,'')||'Uploaded Resume';
+  window._pendingUploadPdf='';
+  if(ext==='pdf'){
+    try{
+      const buf=await file.arrayBuffer();
+      const bytes=new Uint8Array(buf);
+      let bin=''; for(let i=0;i<bytes.length;i++) bin+=String.fromCharCode(bytes[i]);
+      window._pendingUploadPdf=btoa(bin);
+    }catch(e){}
+  }
   $('uploadPreviewText').value=text;
   $('uploadPreviewFile').textContent=file.name+' — '+text.split(/\s+/).length+' words extracted';
   $('uploadPreviewModal').classList.remove('hidden');
 }
-function closeUploadPreview(){ $('uploadPreviewModal').classList.add('hidden'); window._pendingUploadText=''; }
+function closeUploadPreview(){ $('uploadPreviewModal').classList.add('hidden'); window._pendingUploadText=''; window._pendingUploadPdf=''; }
 async function confirmUploadParse(){
   const text=window._pendingUploadText;
   const name=window._pendingUploadName||'Uploaded Resume';
@@ -1522,7 +1532,10 @@ async function confirmUploadParse(){
   let remote=null;
   try{ remote=await aiViaBackend('/api/ai/parse-resume/',{text}); }catch(err){}
   const data=(remote&&remote.resume)?remote.resume:null;
-  const r=blankResume(DB.session,name,'modern',false);
+  const pdfData=window._pendingUploadPdf||'';
+  const hasPdf=!!pdfData;
+  const r=blankResume(DB.session,name,hasPdf?'uploaded':'modern',false);
+  if(hasPdf) r.pdfData=pdfData;
   if(data){
     if(data.personal) Object.assign(r.personal,data.personal);
     if(data.summary) r.summary=data.summary;
@@ -1536,8 +1549,9 @@ async function confirmUploadParse(){
   } else {
     r.summary=text.slice(0,1000);
   }
+  window._pendingUploadPdf='';
   DB.resumes.push(r); persist();
-  toast('Resume uploaded ✓ — review and edit');
+  toast(hasPdf?'Resume uploaded — showing original PDF ✓':'Resume uploaded ✓ — review and edit');
   openBuilder(r.id);
 }
 
@@ -1554,7 +1568,7 @@ function tplMiniHTML(t){
 }
 function openTemplatesGallery(){
   const inBuilder = !$('view-builder').classList.contains('hidden');
-  $('galleryGrid').innerHTML=TEMPLATES.map(t=>`
+  $('galleryGrid').innerHTML=TEMPLATES.filter(t=>t.id!=='uploaded').map(t=>`
     <div class="border border-neutral-200 dark:border-neutral-800 rounded-2xl p-4 bg-white dark:bg-black">
       <div class="flex items-center justify-between mb-3"><span class="font-extrabold">${t.name}</span><span class="text-[10px] font-mono px-2 py-1 rounded-full bg-neutral-100 dark:bg-neutral-900">${t.badge}</span></div>
       ${tplMiniHTML(t)}
@@ -1825,12 +1839,13 @@ function moveSection(i,d){ const a=cur().sectionOrder,j=i+d; if(j<0||j>=a.length
 /* ---------- Design panel ---------- */
 function renderDesign(){
   const r=cur(); if(!r)return; const s=r.settings;
-  $('designTemplates').innerHTML=TEMPLATES.map(t=>`
+  const tplList=TEMPLATES.filter(t=>t.id!=='uploaded'||r.pdfData);
+  $('designTemplates').innerHTML=tplList.map(t=>`
     <button onclick="setTemplate('${t.id}')" class="template-card ${r.template===t.id?'active':''} border-2 border-neutral-200 dark:border-neutral-800 rounded-xl p-2 text-left">
       <div class="bg-neutral-100 dark:bg-neutral-900 rounded-lg h-16 overflow-hidden p-1.5"><div class="bg-white rounded h-full p-1.5" style="font-size:5px;color:#111;line-height:1.8"><div class="font-extrabold" style="font-size:7px">NAME</div><div style="height:2px;background:${s.accent};margin:2px 0"></div><div style="background:#e5e5e5;height:3px"></div><div style="background:#e5e5e5;height:3px;margin-top:2px;width:70%"></div></div></div>
       <div class="mt-1.5 text-[11px] font-bold">${t.name}</div>
     </button>`).join('');
-  $('tplName').textContent=TEMPLATES.find(t=>t.id===r.template)?.name;
+  $('tplName').textContent=TEMPLATES.find(t=>t.id===r.template)?.name||'Uploaded';
   $('swatches').innerHTML=ACCENTS.map(c=>`<button onclick="updateSetting('accent','${c}')" class="swatch ${s.accent===c?'active':''} w-9 h-9 rounded-full border border-black/10" style="background:${c}" title="${c}"></button>`).join('');
   $('setFont').value=s.font; $('setFontSize').value=s.fontSize; $('setHeading').value=s.headingSize;
   $('setLine').value=s.lineHeight; $('setSpacing').value=s.spacing; $('setMargins').value=s.margins;
@@ -1897,7 +1912,42 @@ function renderPreview(){
   const heading=(t,extra='')=>`<div style="font-weight:800;font-size:${Math.max(9,s.headingSize*0.62)}pt;letter-spacing:.16em;text-transform:uppercase;color:${s.accent};margin:0 0 8px;${extra}">${esc(t)}</div>`;
   const divider=(c)=>`<div style="height:2px;background:${c};margin:6px 0 10px"></div>`;
 
-  if(r.template==='modern'){
+  if(r.template==='uploaded' && r.pdfData){
+    // Render uploaded PDF pages as images
+    const containerId='pdfRendered_'+r.id;
+    html=`<div id="${containerId}" style="min-height:1123px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:0"></div>`;
+    $('resumePreview').innerHTML=`<div class="resume-content">${html}</div>`;
+    // Async render PDF pages
+    (async()=>{
+      try{
+        const bin=atob(r.pdfData);
+        const arr=new Uint8Array(bin.length);
+        for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+        const pdf=await pdfjsLib.getDocument({data:arr}).promise;
+        const container=document.getElementById(containerId);
+        if(!container) return;
+        container.innerHTML='';
+        for(let i=1;i<=pdf.numPages;i++){
+          const page=await pdf.getPage(i);
+          const scale=1.5;
+          const vp=page.getViewport({scale});
+          const canvas=document.createElement('canvas');
+          canvas.width=vp.width; canvas.height=vp.height;
+          canvas.style.width='100%'; canvas.style.height='auto';
+          canvas.style.maxWidth=vp.width+'px';
+          canvas.style.display='block';
+          if(i<pdf.numPages) canvas.style.marginBottom='12px';
+          canvas.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)';
+          container.appendChild(canvas);
+          await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;
+        }
+      }catch(e){
+        const c=document.getElementById(containerId);
+        if(c) c.innerHTML='<div style="padding:40px;text-align:center;opacity:.5">Could not render PDF preview. Switch to another template to edit.</div>';
+      }
+    })();
+    return; // Don't render HTML template
+  } else if(r.template==='modern'){
     const sbSkills=[...r.skills.technical,...r.skills.tools].slice(0,10);
     html=`<div style="${base}display:flex;min-height:1123px">
       <div style="width:250px;flex-shrink:0;background:#F4F4F5;padding:${pad}px 26px;border-right:3px solid ${s.accent}">
