@@ -1131,7 +1131,7 @@ function blankResume(ownerId,name,template,withSample){
     sectionOrder:[...DEFAULT_ORDER], hidden:[],
     personal:{fullName:'',title:'',email:'',phone:'',location:'',website:'',linkedin:'',github:'',portfolio:'',photo:''},
     summary:'', experience:[], education:[], skills:{technical:[],tools:[],soft:[],languages:[]}, projects:[], certifications:[],
-    languages:[], awards:[], volunteering:[], interests:'', references:'', pdfData:''
+    languages:[], awards:[], volunteering:[], interests:'', references:'', pdfData:'', pdfEdits:{}
   };
   if(withSample) fillSample(r);
   return r;
@@ -1923,11 +1923,10 @@ function renderPreview(){
   const divider=(c)=>`<div style="height:2px;background:${c};margin:6px 0 10px"></div>`;
 
   if(r.template==='uploaded' && r.pdfData){
-    // Render uploaded PDF pages as images
     const containerId='pdfRendered_'+r.id;
-    html=`<div id="${containerId}" style="min-height:1123px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:0"></div>`;
+    html=`<div id="${containerId}" style="min-height:1123px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:0;position:relative"></div>`;
     $('resumePreview').innerHTML=`<div class="resume-content">${html}</div>`;
-    // Async render PDF pages
+    // Async render PDF pages with editable overlays
     (async()=>{
       try{
         const bin=atob(r.pdfData);
@@ -1937,26 +1936,85 @@ function renderPreview(){
         const container=document.getElementById(containerId);
         if(!container) return;
         container.innerHTML='';
-        for(let i=1;i<=pdf.numPages;i++){
-          const page=await pdf.getPage(i);
+        // Initialize edit map on resume
+        if(!r.pdfEdits) r.pdfEdits={};
+        for(let pg=1;pg<=pdf.numPages;pg++){
+          const page=await pdf.getPage(pg);
           const scale=1.5;
           const vp=page.getViewport({scale});
+          // Page wrapper
+          const pageWrap=document.createElement('div');
+          pageWrap.style.cssText='position:relative;width:100%;max-width:'+vp.width+'px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.1)';
+          // Canvas for PDF background
           const canvas=document.createElement('canvas');
           canvas.width=vp.width; canvas.height=vp.height;
-          canvas.style.width='100%'; canvas.style.height='auto';
-          canvas.style.maxWidth=vp.width+'px';
-          canvas.style.display='block';
-          if(i<pdf.numPages) canvas.style.marginBottom='12px';
-          canvas.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)';
-          container.appendChild(canvas);
+          canvas.style.cssText='width:100%;height:auto;display:block';
+          pageWrap.appendChild(canvas);
           await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;
+          // Extract text content for overlays
+          const content=await page.getTextContent();
+          const items=content.items.filter(it=>it.str&&it.str.trim());
+          // Group by Y coordinate into lines
+          const rows={};
+          items.forEach((it,idx)=>{
+            const y=Math.round(it.transform[5]);
+            let key=null;
+            for(const k of Object.keys(rows)){if(Math.abs(k-y)<=3){key=k;break;}}
+            if(key===null) key=y;
+            if(!rows[key]) rows[key]=[];
+            rows[key].push({x:it.transform[4],str:it.str,h:it.height||12,font:it.fontName,idx:idx});
+          });
+          // Create overlay for each text line
+          const sortedKeys=Object.keys(rows).map(Number).sort((a,b)=>b-a);
+          sortedKeys.forEach(k=>{
+            const row=rows[k].sort((a,b)=>a.x-b.x);
+            const fullText=row.map(r=>r.str).join(' ');
+            const editKey=pg+'_'+k;
+            const displayText=r.pdfEdits[editKey]!==undefined?r.pdfEdits[editKey]:fullText;
+            // Position: PDF Y is bottom-up, convert to top-down
+            const firstItem=row[0];
+            const lastItem=row[row.length-1];
+            const topPx=(vp.height-k-4)*scale/vp.height*100; // approximate
+            const topPt=vp.height-k-firstItem.h;
+            const leftPt=firstItem.x;
+            const widthPt=(lastItem.x+lastItem.str.length*6)-firstItem.x+10;
+            const heightPt=firstItem.h+4;
+            // Convert to percentage of page
+            const topPct=(topPt/vp.height)*100;
+            const leftPct=(leftPt/vp.width)*100;
+            const widthPct=Math.min((widthPt/vp.width)*100,100-leftPct);
+            const heightPct=(heightPt/vp.height)*100;
+            const fontSize=Math.max(8,Math.round(firstItem.h*0.8));
+            const overlay=document.createElement('div');
+            overlay.contentEditable='true';
+            overlay.spellcheck=false;
+            overlay.className='pdf-edit-overlay';
+            overlay.style.cssText='position:absolute;top:'+topPct+'%;left:'+leftPct+'%;width:'+widthPct+'%;height:'+heightPct+'%;font-size:'+fontSize+'px;line-height:1.2;color:transparent;caret-color:#000;background:transparent;border:1px solid transparent;border-radius:2px;outline:none;cursor:text;overflow:hidden;white-space:nowrap;z-index:10;padding:0;margin:0';
+            overlay.textContent=displayText;
+            overlay.title='Click to edit: '+fullText;
+            // Highlight on hover
+            overlay.addEventListener('mouseenter',()=>{overlay.style.background='rgba(59,130,246,0.08)';overlay.style.borderColor='rgba(59,130,246,0.3)';});
+            overlay.addEventListener('mouseleave',()=>{if(overlay!==document.activeElement){overlay.style.background='transparent';overlay.style.borderColor='transparent';}});
+            // Save edits on blur
+            overlay.addEventListener('blur',()=>{
+              overlay.style.background='transparent';overlay.style.borderColor='transparent';
+              const val=overlay.textContent.trim();
+              if(val!==fullText){ r.pdfEdits[editKey]=val; touch(); }
+            });
+            overlay.addEventListener('focus',()=>{overlay.style.background='rgba(59,130,246,0.08)';overlay.style.borderColor='rgba(59,130,246,0.3)';});
+            // Make text visible on focus
+            overlay.addEventListener('focus',()=>{overlay.style.color='#000';});
+            overlay.addEventListener('blur',()=>{overlay.style.color='transparent';});
+            pageWrap.appendChild(overlay);
+          });
+          container.appendChild(pageWrap);
         }
       }catch(e){
         const c=document.getElementById(containerId);
-        if(c) c.innerHTML='<div style="padding:40px;text-align:center;opacity:.5">Could not render PDF preview. Switch to another template to edit.</div>';
+        if(c) c.innerHTML='<div style="padding:40px;text-align:center;opacity:.5">Could not render PDF. Switch template to edit.</div>';
       }
     })();
-    return; // Don't render HTML template
+    return;
   } else if(r.template==='modern'){
     const sbSkills=[...r.skills.technical,...r.skills.tools].slice(0,10);
     html=`<div style="${base}display:flex;min-height:1123px">
