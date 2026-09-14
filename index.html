@@ -1484,19 +1484,32 @@ async function handleUpload(e){
         const lines=sortedKeys.map(k=>{
           const row=rows[k].sort((a,b)=>a.x-b.x);
           let line='';
-          let lastX=0;
+          let lastEnd=0;
           row.forEach((item,idx)=>{
-            // Add space if there's a gap between items (more than ~8px or 1 char width)
-            if(idx>0&&item.x-lastX>8) line+='  ';
-            else if(idx>0&&!line.endsWith(' ')&&!item.str.startsWith(' ')) line+=' ';
-            line+=item.str;
-            lastX=item.x+item.str.length*5; // approximate width
+            const gap=item.x-lastEnd;
+            if(idx===0){
+              line+=item.str;
+            } else if(gap>8){
+              // Large gap = new word
+              line+=' '+item.str;
+            } else if(gap>2&&item.str.trim()&&line.trim()&&/[a-zA-Z0-9]$/.test(line.trim())&&/^[a-zA-Z0-9]/.test(item.str)){
+              // Medium gap between alphanumeric chars = new word
+              line+=' '+item.str;
+            } else {
+              // Small gap or punctuation = same word, just append
+              line+=item.str;
+            }
+            // Estimate actual end position using font size if available
+            const charWidth=item.height?item.height*0.5:5;
+            lastEnd=item.x+item.str.length*charWidth;
           });
-          return line.trim();
+          // Clean up double spaces
+          line=line.replace(/ {2,}/g,' ').trim();
+          return line;
         }).filter(l=>l);
         pages.push(lines.join('\n'));
       }
-      text=pages.join('\n\n');
+      text=pages.join('\n\n').replace(/ {2,}/g,' ').replace(/\n{3,}/g,'\n\n').trim();
     } else if(ext==='docx'||ext==='doc'){
       const buf=await file.arrayBuffer();
       const result=await mammoth.extractRawText({arrayBuffer:buf});
@@ -2175,7 +2188,7 @@ function parseUploadedPDF(){
         }).filter(l=>l);
         pages.push(lines.join('\n'));
       }
-      const text=pages.join('\n\n').replace(/\s{3,}/g,'  ').trim();
+      const text=pages.join('\n\n').replace(/ {2,}/g,' ').replace(/\s{3,}/g,'  ').trim();
       if(!text){toast('Could not extract text from PDF','warn');return;}
       // Send to parser
       const remote=await aiViaBackend('/api/ai/parse-resume/',{text});
